@@ -1,0 +1,1082 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Gente &amp; Gestão</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700&family=Nunito+Sans:opsz,wght@6..12,400;6..12,600;6..12,700&display=swap">
+<style>
+:root {
+  color-scheme: light;
+  --bg: #F2F5F4; --surface: #FFFFFF; --surface-2: #E8EEEC; --ink: #14201F; --muted: #5A6866; --line: #D5DEDB;
+  --accent: #0E6B63; --accent-ink: #FFFFFF; --accent-soft: #DCEFEC;
+  --d: #D04545; --i: #D99A0B; --s: #3A9657; --c: #2E6CB5;
+  --good: #2E8B57; --warn: #B7791F; --bad: #C0392B; --av-l: 42%;
+  --display: "Sora", "Segoe UI", system-ui, sans-serif;
+  --body: "Nunito Sans", "Segoe UI", system-ui, sans-serif;
+  --r: 10px;
+}
+@media (prefers-color-scheme: dark) { :root {
+  --bg: #0E1514; --surface: #162120; --surface-2: #1E2B29; --ink: #E5EEEC; --muted: #98A8A5; --line: #2A3836;
+  --accent: #4FC1B4; --accent-ink: #062421; --accent-soft: #173936;
+  --d: #F07070; --i: #F2C04A; --s: #6CC489; --c: #6FA6EC;
+  --good: #5CC98A; --warn: #E8B04F; --bad: #F07A6E; --av-l: 36%; color-scheme: dark } }
+
+* { box-sizing: border-box }
+html, body { margin: 0 }
+body { background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 15px; line-height: 1.5 }
+[hidden] { display: none !important }
+h1, h2, h3 { font-family: var(--display); text-wrap: balance; margin: 0; letter-spacing: -0.01em }
+h1 { font-size: 1.6rem; font-weight: 700 }
+h2 { font-size: 1.12rem; font-weight: 600 }
+h3 { font-size: 0.98rem; font-weight: 600 }
+p { margin: 0 }
+button, input, select, textarea { font: inherit; color: inherit }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px }
+.num { font-variant-numeric: tabular-nums }
+.muted { color: var(--muted) }
+.small { font-size: 0.85rem }
+.eyebrow { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); font-weight: 700 }
+
+/* login */
+.login { min-height: 100vh; display: grid; place-items: center; padding: 24px 16px }
+.login-box { width: min(400px, 100%); background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 28px; display: flex; flex-direction: column; gap: 16px }
+.login-box .brand { padding: 0 }
+
+.app { display: grid; grid-template-columns: 236px minmax(0, 1fr); min-height: 100vh }
+.side { background: var(--surface); border-right: 1px solid var(--line); padding: 22px 14px; position: sticky; top: 0; height: 100vh; display: flex; flex-direction: column; gap: 22px }
+.brand { display: flex; align-items: center; gap: 10px; padding: 0 8px }
+.brand-mark { width: 34px; height: 34px; border-radius: 9px; display: grid; grid-template-columns: 1fr 1fr; overflow: hidden; flex: none }
+.brand-mark span:nth-child(1) { background: var(--d) } .brand-mark span:nth-child(2) { background: var(--i) }
+.brand-mark span:nth-child(3) { background: var(--c) } .brand-mark span:nth-child(4) { background: var(--s) }
+.brand b { font-family: var(--display); font-size: 1.02rem; line-height: 1.15; display: block }
+.brand small { color: var(--muted); font-size: 0.75rem }
+nav.tabs { display: flex; flex-direction: column; gap: 2px }
+.tab { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 8px; border: 0; background: none; cursor: pointer; text-align: left; color: var(--muted); font-weight: 600 }
+.tab svg { width: 18px; height: 18px; flex: none; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round }
+.tab:hover { background: var(--surface-2); color: var(--ink) }
+.tab[aria-current="page"] { background: var(--accent-soft); color: var(--accent) }
+.side-foot { margin-top: auto; padding: 12px 8px 0; border-top: 1px solid var(--line); display: flex; flex-direction: column; gap: 6px; font-size: 0.85rem }
+.side-foot b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+
+main { padding: 28px 16px 64px; min-width: 0 }
+.wrap { max-width: 1180px; margin: 0 auto; display: flex; flex-direction: column; gap: 22px }
+.head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 14px }
+.head p { color: var(--muted); max-width: 62ch; margin-top: 4px }
+.actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center }
+
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 9px 15px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); cursor: pointer; font-weight: 700; font-size: 0.9rem; white-space: nowrap }
+.btn:hover { border-color: var(--accent) }
+.btn:disabled { opacity: .6; cursor: wait }
+.btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent) }
+.btn.primary:hover { filter: brightness(1.08) }
+.btn.danger { color: var(--bad) }
+.btn.danger.solid { background: var(--bad); color: #fff; border-color: var(--bad) }
+.btn.sm { padding: 5px 10px; font-size: 0.82rem }
+.btn.link { border: 0; background: none; padding: 4px 6px; color: var(--accent) }
+
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 18px 20px; min-width: 0 }
+.panel > header { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 14px; flex-wrap: wrap }
+.grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px }
+.grid-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px }
+.kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px }
+.kpi { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 16px 18px; display: flex; flex-direction: column; gap: 4px }
+.kpi b { font-family: var(--display); font-size: 1.75rem; font-weight: 600; font-variant-numeric: tabular-nums; line-height: 1.2 }
+.kpi span { color: var(--muted); font-size: 0.85rem }
+
+.scope { display: flex; flex-wrap: wrap; gap: 6px; align-items: center }
+.chip { border: 1px solid var(--line); background: var(--surface); border-radius: 99px; padding: 5px 12px; font-weight: 700; font-size: 0.82rem; cursor: pointer; color: var(--muted) }
+.chip[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink) }
+.tag { display: inline-block; padding: 1px 8px; border-radius: 6px; font-size: 0.76rem; font-weight: 700; background: var(--surface-2); color: var(--muted); white-space: nowrap }
+
+.toolbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center }
+.field { display: flex; flex-direction: column; gap: 5px; min-width: 0 }
+.field label, .lbl { font-size: 0.8rem; font-weight: 700; color: var(--muted) }
+input[type="text"], input[type="email"], input[type="tel"], input[type="date"], input[type="number"], input[type="search"], input[type="password"], select, textarea {
+  background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 8px 11px; width: 100%; min-width: 0 }
+input[readonly] { background: var(--surface-2) }
+textarea { min-height: 84px; resize: vertical }
+.toolbar input[type="search"] { width: 260px; max-width: 100% }
+.toolbar select { width: auto; max-width: 100% }
+.checks { display: flex; flex-wrap: wrap; gap: 8px 16px }
+.checks label { display: flex; gap: 6px; align-items: center; font-weight: 600; color: var(--ink); font-size: 0.92rem; cursor: pointer }
+.checks input { width: 17px; height: 17px; accent-color: var(--accent) }
+
+.table-wrap { overflow-x: auto; margin: 0 -20px; padding: 0 20px }
+table { width: 100%; border-collapse: collapse; font-size: 0.92rem }
+th { text-align: left; font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); font-weight: 700; padding: 8px 10px; border-bottom: 1px solid var(--line); white-space: nowrap }
+td { padding: 10px; border-bottom: 1px solid var(--line); vertical-align: middle }
+tr.click { cursor: pointer }
+tr.click:hover td { background: var(--surface-2) }
+
+.person { display: flex; align-items: center; gap: 10px; min-width: 0 }
+.person > div { min-width: 0 }
+.person b { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
+.person small { color: var(--muted); display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
+.av { width: 34px; height: 34px; border-radius: 50%; flex: none; display: grid; place-items: center; font-weight: 700; font-size: 0.8rem; color: #fff; background: hsl(var(--h, 170) 45% var(--av-l)); font-family: var(--display) }
+.av.lg { width: 64px; height: 64px; font-size: 1.3rem }
+
+.pill { display: inline-flex; align-items: center; gap: 5px; padding: 2px 9px; border-radius: 99px; font-size: 0.78rem; font-weight: 700; background: var(--surface-2); color: var(--muted); white-space: nowrap }
+.pill::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor }
+.pill.ok { color: var(--good) } .pill.warn { color: var(--warn) } .pill.bad { color: var(--bad) }
+.pill.plain::before { display: none }
+
+.disc-chip { display: inline-flex; border-radius: 6px; overflow: hidden; font-weight: 700; font-size: 0.78rem; font-family: var(--display) }
+.disc-chip span { padding: 2px 7px; color: #fff }
+.f-D { background: var(--d) } .f-I { background: var(--i) } .f-S { background: var(--s) } .f-C { background: var(--c) }
+.t-D { color: var(--d) } .t-I { color: var(--i) } .t-S { color: var(--s) } .t-C { color: var(--c) }
+
+.bars { display: flex; flex-direction: column; gap: 8px }
+.bar-row { display: grid; grid-template-columns: 112px minmax(0, 1fr) 38px; gap: 10px; align-items: center; font-size: 0.86rem }
+.bar-track { height: 10px; background: var(--surface-2); border-radius: 99px; overflow: hidden }
+.bar-fill { height: 100%; border-radius: 99px }
+.bar-row .num { text-align: right; font-weight: 700 }
+
+.stack { display: flex; height: 26px; border-radius: 6px; overflow: hidden; background: var(--surface-2) }
+.stack div { display: grid; place-items: center; color: #fff; font-size: 0.78rem; font-weight: 700; min-width: 0 }
+.legend { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 10px; font-size: 0.85rem }
+.legend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; vertical-align: -1px }
+
+.list { display: flex; flex-direction: column }
+.list-item { display: flex; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--line); align-items: flex-start }
+.list-item:last-child { border-bottom: 0 }
+.list-item > .grow { flex: 1; min-width: 0 }
+.empty { padding: 26px 12px; text-align: center; color: var(--muted); display: flex; flex-direction: column; gap: 10px; align-items: center }
+.empty b { color: var(--ink); font-family: var(--display); font-weight: 600 }
+
+.fb { border: 1px solid var(--line); border-radius: var(--r); padding: 14px 16px; display: flex; flex-direction: column; gap: 8px; background: var(--surface) }
+.fb .meta { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; font-size: 0.84rem; color: var(--muted) }
+.fb .txt { white-space: pre-wrap }
+.fb .plan { background: var(--surface-2); border-radius: 8px; padding: 8px 12px; font-size: 0.9rem; white-space: pre-wrap }
+.tipo-Reconhecimento { color: var(--good) } .tipo-Construtivo { color: var(--warn) } .tipo-Reunião { color: var(--c) } .tipo-Alinhamento { color: var(--accent) }
+
+.profile-head { display: flex; gap: 18px; align-items: center; flex-wrap: wrap }
+.profile-head .grow { flex: 1; min-width: 200px; display: flex; flex-direction: column; gap: 4px }
+.info-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 14px 20px }
+.info-grid div span { display: block; font-size: 0.76rem; color: var(--muted); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em }
+.info-grid div b { font-weight: 600; overflow-wrap: anywhere }
+
+.factor-cards { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px }
+.factor { border-radius: var(--r); padding: 16px; border: 1px solid var(--line); background: var(--surface); display: flex; flex-direction: column; gap: 6px; border-top: 4px solid }
+.factor .letter { font-family: var(--display); font-size: 1.9rem; font-weight: 700; line-height: 1 }
+.factor ul { margin: 0; padding-left: 18px; font-size: 0.86rem; color: var(--muted) }
+
+.ninebox { display: grid; grid-template-columns: 26px repeat(3, minmax(0, 1fr)); grid-template-rows: repeat(3, minmax(96px, auto)) 26px; gap: 6px }
+.nb-cell { background: var(--surface-2); border-radius: 8px; padding: 8px 10px; display: flex; flex-direction: column; gap: 6px; min-width: 0 }
+.nb-cell.hot { background: var(--accent-soft) }
+.nb-cell .nb-t { font-size: 0.74rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em }
+.nb-people { display: flex; flex-wrap: wrap; gap: 4px }
+.nb-people .av, .members .av { width: 28px; height: 28px; font-size: 0.68rem; cursor: pointer; border: 0 }
+.nb-axis { font-size: 0.72rem; color: var(--muted); font-weight: 700; display: grid; place-items: center; text-transform: uppercase; letter-spacing: 0.05em }
+.nb-axis.v { writing-mode: vertical-rl; transform: rotate(180deg) }
+
+.score { font-family: var(--display); font-weight: 600; font-variant-numeric: tabular-nums }
+.dots { display: inline-flex; gap: 3px; vertical-align: middle }
+.dots i { width: 8px; height: 8px; border-radius: 50%; background: var(--line) }
+.dots i.on { background: var(--accent) }
+
+.areas { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px }
+.area { border: 1px solid var(--line); border-radius: var(--r); padding: 16px; background: var(--surface); display: flex; flex-direction: column; gap: 10px; min-width: 0 }
+.area header { display: flex; justify-content: space-between; gap: 8px; align-items: flex-start }
+.area .members { display: flex; flex-wrap: wrap; gap: 4px }
+.tree, .tree ul { list-style: none; margin: 0; padding: 0 }
+.tree ul { padding-left: 26px; border-left: 1px dashed var(--line); margin-left: 16px }
+.tree li { padding: 5px 0 }
+.tree .node { display: inline-flex; align-items: center; gap: 10px; padding: 6px 12px 6px 6px; border: 1px solid var(--line); border-radius: 99px; background: var(--surface); cursor: pointer; max-width: 100% }
+.tree .node:hover { border-color: var(--accent) }
+.tree .node .av { width: 28px; height: 28px; font-size: 0.68rem }
+.tree .node small { color: var(--muted) }
+
+dialog { border: 0; border-radius: 14px; padding: 0; width: min(720px, calc(100vw - 32px)); max-height: calc(100vh - 40px); background: var(--surface); color: var(--ink); box-shadow: 0 20px 60px rgba(0,0,0,0.3) }
+dialog::backdrop { background: rgba(10, 20, 19, 0.5) }
+dialog form { display: flex; flex-direction: column; max-height: calc(100vh - 40px) }
+.m-head { padding: 18px 22px; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center; gap: 10px }
+.m-body { padding: 18px 22px; overflow-y: auto; display: flex; flex-direction: column; gap: 14px }
+.m-foot { padding: 14px 22px; border-top: 1px solid var(--line); display: flex; justify-content: flex-end; gap: 8px; flex-wrap: wrap }
+.form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 14px }
+.form-grid .full { grid-column: 1 / -1 }
+.req::after { content: " *"; color: var(--bad) }
+.form-err { color: var(--bad); font-weight: 700; font-size: 0.88rem }
+
+.q-group { border: 1px solid var(--line); border-radius: var(--r); overflow: hidden }
+.q-group.missing { border-color: var(--bad) }
+.q-group table td, .q-group table th { padding: 6px 12px }
+.q-group th:not(:first-child), .q-group td:not(:first-child) { text-align: center; width: 76px }
+.q-group input { width: 18px; height: 18px; accent-color: var(--accent); cursor: pointer }
+.q-group caption { text-align: left; padding: 8px 12px; background: var(--surface-2); font-size: 0.8rem; font-weight: 700; color: var(--muted) }
+
+.comp-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--line) }
+.comp-row small { display: block; color: var(--muted) }
+.scale { display: flex; gap: 4px }
+.scale label { position: relative }
+.scale input { position: absolute; opacity: 0; pointer-events: none }
+.scale span { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 8px; border: 1px solid var(--line); cursor: pointer; font-weight: 700; font-variant-numeric: tabular-nums }
+.scale input:checked + span { background: var(--accent); color: var(--accent-ink); border-color: var(--accent) }
+.scale input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: 2px }
+
+#toast { position: fixed; right: 16px; bottom: 16px; background: var(--ink); color: var(--bg); padding: 11px 16px; border-radius: 10px; font-weight: 600; font-size: 0.9rem; max-width: min(420px, calc(100vw - 32px)); z-index: 50 }
+#toast.err { background: var(--bad); color: #fff }
+
+@media (max-width: 1020px) { .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)) } .factor-cards { grid-template-columns: repeat(2, minmax(0, 1fr)) } .grid-3 { grid-template-columns: minmax(0, 1fr) } }
+@media (max-width: 860px) {
+  .app { grid-template-columns: minmax(0, 1fr) }
+  .side { height: auto; flex-direction: row; flex-wrap: wrap; align-items: center; padding: 10px 16px; border-right: 0; border-bottom: 1px solid var(--line); z-index: 5; gap: 10px }
+  .brand > div { display: none } .brand { padding: 0 }
+  nav.tabs { flex-direction: row; overflow-x: auto; min-width: 0; flex: 1 }
+  .tab { padding: 8px 10px; white-space: nowrap } .tab svg { display: none }
+  .side-foot { margin-top: 0; border-top: 0; padding: 0; flex-direction: row; align-items: center; width: 100% }
+  .side-foot .who { display: none }
+  .grid-2 { grid-template-columns: minmax(0, 1fr) }
+}
+@media (max-width: 560px) {
+  .kpis, .factor-cards, .form-grid { grid-template-columns: minmax(0, 1fr) }
+  .comp-row { grid-template-columns: minmax(0, 1fr) }
+  .bar-row { grid-template-columns: 84px minmax(0, 1fr) 34px }
+}
+</style>
+</head>
+<body>
+
+<div class="login" id="telaLogin" hidden>
+  <form class="login-box" id="formLogin" novalidate>
+    <div class="brand">
+      <div class="brand-mark" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
+      <div><b>Gente &amp; Gestão</b><small>Plataforma de RH</small></div>
+    </div>
+    <h1>Entrar</h1>
+    <div class="field"><label for="l-email">E-mail</label><input type="email" id="l-email" autocomplete="username" required></div>
+    <div class="field"><label for="l-senha">Senha</label><input type="password" id="l-senha" autocomplete="current-password" required></div>
+    <p class="form-err" id="l-erro" hidden></p>
+    <button type="submit" class="btn primary" id="l-btn">Entrar</button>
+    <p class="small muted">Esqueceu a senha? Peça ao RH para redefinir o seu acesso.</p>
+  </form>
+</div>
+
+<div class="login" id="telaAviso" hidden>
+  <div class="login-box"><h1 id="avisoTitulo"></h1><p id="avisoTexto" class="muted"></p><button type="button" class="btn" data-action="sair" id="avisoSair">Sair</button></div>
+</div>
+
+<div class="app" id="telaApp" hidden>
+  <aside class="side">
+    <div class="brand">
+      <div class="brand-mark" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
+      <div><b>Gente &amp; Gestão</b><small>Plataforma de RH</small></div>
+    </div>
+    <nav class="tabs" id="tabs" aria-label="Seções">
+      <button class="tab" data-action="go" data-view="painel"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>Painel</button>
+      <button class="tab" data-action="go" data-view="colaboradores"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.6 3.4-5.5 6.5-5.5s5.7 1.9 6.5 5.5"/><circle cx="17" cy="9" r="2.6"/><path d="M17 14.5c2.3 0 4 1.4 4.6 4"/></svg>Colaboradores</button>
+      <button class="tab" data-action="go" data-view="disc"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 3v18M3 12h18"/></svg>Testes DISC</button>
+      <button class="tab" data-action="go" data-view="desempenho"><svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Desempenho</button>
+      <button class="tab" data-action="go" data-view="estrutura"><svg viewBox="0 0 24 24"><rect x="9" y="2.5" width="6" height="5" rx="1"/><rect x="2.5" y="16.5" width="6" height="5" rx="1"/><rect x="15.5" y="16.5" width="6" height="5" rx="1"/><path d="M12 7.5V12M5.5 16.5V12h13v4.5"/></svg>Estrutura</button>
+      <button class="tab" data-action="go" data-view="feedbacks"><svg viewBox="0 0 24 24"><path d="M20 15a2 2 0 0 1-2 2H8l-4 4V5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2z"/></svg>Feedbacks</button>
+      <button class="tab" data-action="go" data-view="usuarios" id="tabUsuarios" hidden><svg viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>Usuários e acessos</button>
+    </nav>
+    <div class="side-foot">
+      <div class="who"><b id="meNome"></b><span class="muted small" id="mePapel"></span></div>
+      <div class="actions"><button type="button" class="btn sm" data-action="minha-senha">Minha senha</button><button type="button" class="btn sm" data-action="sair">Sair</button></div>
+    </div>
+  </aside>
+  <main><div class="wrap" id="view"></div></main>
+</div>
+
+<dialog id="modal">
+  <form id="modalForm" novalidate>
+    <div class="m-head"><h2 id="mTitle"></h2><button type="button" class="btn sm" data-action="close-modal">Fechar</button></div>
+    <div class="m-body" id="mBody"></div>
+    <div class="m-foot" id="mFoot"></div>
+  </form>
+</dialog>
+<div id="toast" hidden></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script src="config.js"></script>
+<script>
+const SETORES = { CONTABIL: "Contábil", FISCAL: "Fiscal", DP: "Departamento Pessoal", ATENDIMENTO: "Atendimento" };
+const TABELAS = ["setores", "colaboradores", "disc", "avaliacoes", "feedbacks"];
+const S = { setores: [], colaboradores: [], disc: [], avaliacoes: [], feedbacks: [], perfis: [] };
+let sb = null, me = null, carregado = false;
+let view = "painel", perfilId = null;
+const F = { setor: "", busca: "", status: "", fbColab: "", fbTipo: "", ciclo: "" };
+
+const FACTORS = {
+  D: { nome: "Dominância", resumo: "Direto, decidido e orientado a resultados. Gosta de desafios, autonomia e de ver as coisas acontecerem.",
+       fortes: ["Decide rápido", "Foco em metas", "Encara mudanças"], atencao: ["Impaciência", "Pode atropelar pessoas", "Escuta pouco"],
+       liderar: "Dê autonomia e metas claras, seja objetivo nas conversas e fale de resultados." },
+  I: { nome: "Influência", resumo: "Comunicativo, entusiasmado e persuasivo. Energiza o time e cria conexões com facilidade.",
+       fortes: ["Comunicação", "Motiva pessoas", "Criatividade"], atencao: ["Dispersão", "Pouco acompanhamento", "Promete demais"],
+       liderar: "Reconheça em público, abra espaço para ideias e ajude a organizar prazos e combinados." },
+  S: { nome: "Estabilidade", resumo: "Calmo, leal e colaborativo. Valoriza harmonia, rotina e relações de confiança.",
+       fortes: ["Cooperação", "Constância", "Boa escuta"], atencao: ["Resiste a mudanças", "Dificuldade em dizer não", "Evita conflito"],
+       liderar: "Antecipe mudanças com explicação, mantenha um ambiente seguro e valorize a dedicação." },
+  C: { nome: "Conformidade", resumo: "Analítico, preciso e criterioso. Valoriza qualidade, método e regras claras.",
+       fortes: ["Qualidade", "Análise", "Organização"], atencao: ["Perfeccionismo", "Demora para decidir", "Autocrítica alta"],
+       liderar: "Dê informações e critérios claros, prazos realistas e respeite o método de trabalho." },
+};
+// Cada grupo traz uma palavra por fator, na ordem D, I, S, C
+const DISC_GRUPOS = [
+  ["Decidido", "Comunicativo", "Paciente", "Preciso"],
+  ["Competitivo", "Entusiasmado", "Leal", "Cuidadoso"],
+  ["Direto", "Sociável", "Calmo", "Analítico"],
+  ["Ousado", "Persuasivo", "Prestativo", "Organizado"],
+  ["Determinado", "Otimista", "Estável", "Detalhista"],
+  ["Assertivo", "Inspirador", "Tolerante", "Criterioso"],
+  ["Exigente", "Expressivo", "Conciliador", "Metódico"],
+  ["Independente", "Animado", "Bom ouvinte", "Disciplinado"],
+  ["Objetivo", "Carismático", "Constante", "Lógico"],
+  ["Corajoso", "Espontâneo", "Cooperativo", "Perfeccionista"],
+  ["Pioneiro", "Popular", "Previsível", "Sistemático"],
+  ["Firme", "Falante", "Gentil", "Reservado"],
+  ["Focado em resultados", "Influente", "Confiável", "Cauteloso"],
+  ["Ambicioso", "Bem-humorado", "Tranquilo", "Rigoroso"],
+  ["Dominante", "Extrovertido", "Harmonioso", "Ponderado"],
+  ["Rápido nas decisões", "Convincente", "Persistente", "Exato"],
+];
+const COMPETENCIAS = [
+  ["Entrega de resultados", "Cumpre metas e prazos com qualidade"],
+  ["Conhecimento técnico", "Domina as ferramentas e processos da função"],
+  ["Comunicação", "Expressa ideias com clareza e escuta os outros"],
+  ["Trabalho em equipe", "Colabora e contribui para o resultado coletivo"],
+  ["Proatividade", "Antecipa problemas e propõe soluções"],
+  ["Adaptabilidade", "Lida bem com mudanças e novas demandas"],
+  ["Liderança e influência", "Mobiliza pessoas e assume responsabilidades"],
+];
+const NINE = { alto: ["Enigma", "Em crescimento", "Estrela"], medio: ["Dilema", "Mantenedor", "Alto desempenho"], baixo: ["Insuficiente", "Eficaz", "Comprometido"] };
+const TIPOS_FB = ["Reconhecimento", "Construtivo", "Reunião 1:1", "Alinhamento de metas"];
+const STATUS = ["Ativo", "Férias", "Afastado", "Desligado"];
+const CONTRATOS = ["CLT", "PJ", "Estágio", "Temporário", "Aprendiz"];
+
+/* ---------- utilidades ---------- */
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const hoje = () => { const d = new Date(); return new Date(d - d.getTimezoneOffset() * 6e4).toISOString().slice(0, 10); };
+const fmtData = d => d ? d.split("-").reverse().join("/") : "—";
+const fmtNota = n => Number(n).toFixed(1).replace(".", ",");
+const byNome = (a, b) => (a.nome || "").localeCompare(b.nome || "", "pt-BR");
+const byDataDesc = (a, b) => (b.data || "").localeCompare(a.data || "") || (b.criado_em || "").localeCompare(a.criado_em || "");
+const isAdmin = () => me?.papel === "admin";
+const meus = r => isAdmin() || r.criado_por === me.id;
+const colab = id => S.colaboradores.find(c => c.id === id);
+const nomeDe = id => colab(id)?.nome || "Colaborador";
+const iniciais = n => (n || "?").trim().split(/\s+/).filter(Boolean).map(p => p[0]).slice(0, 2).join("").toUpperCase();
+const hue = s => { let h = 0; for (const ch of String(s)) h = (h * 31 + ch.charCodeAt(0)) % 360; return h; };
+const avatar = (c, cls = "") => `<span class="av ${cls}" style="--h:${hue(c?.id || c?.nome)}" aria-hidden="true">${esc(iniciais(c?.nome))}</span>`;
+const setoresVisiveis = () => isAdmin() ? Object.keys(SETORES) : Object.keys(SETORES).filter(k => (me.setores || []).includes(k));
+// colaboradores dentro do filtro de setor escolhido no topo
+const pessoas = () => S.colaboradores.filter(c => !F.setor || c.setor === F.setor);
+const noEscopo = cid => { const c = colab(cid); return !!c && (!F.setor || c.setor === F.setor); };
+const ultimoDisc = cid => S.disc.filter(d => d.colaborador_id === cid).sort(byDataDesc)[0];
+const ultimaAval = cid => S.avaliacoes.filter(a => a.colaborador_id === cid).sort(byDataDesc)[0];
+const ativos = () => pessoas().filter(c => c.status !== "Desligado");
+const statusPill = s => `<span class="pill ${s === "Ativo" ? "ok" : s === "Desligado" ? "bad" : "warn"}">${esc(s || "Ativo")}</span>`;
+const discChip = d => d ? `<span class="disc-chip" title="Perfil ${esc(d.perfil)}">${d.perfil.split("").map(f => `<span class="f-${f}">${f}</span>`).join("")}</span>` : `<span class="muted small">Sem teste</span>`;
+const nivel = m => m < 3 ? 0 : m < 4 ? 1 : 2;
+const potIdx = p => ({ Baixo: 0, Médio: 1, Alto: 2 }[p] ?? 1);
+const dots = n => `<span class="dots">${[1,2,3,4,5].map(i => `<i class="${i <= Math.round(n) ? "on" : ""}"></i>`).join("")}</span>`;
+const colabOptions = (sel, incluirVazio = true, excluir) => (incluirVazio ? `<option value="">Selecione…</option>` : "") +
+  [...pessoas()].sort(byNome).filter(c => c.id !== excluir).map(c => `<option value="${esc(c.id)}" ${c.id === sel ? "selected" : ""}>${esc(c.nome)}</option>`).join("");
+const vazioParaNull = o => { const r = {}; for (const [k, v] of Object.entries(o)) r[k] = v === "" ? null : v; return r; };
+
+function perfilDe(v) {
+  const ord = Object.entries(v).sort((a, b) => b[1] - a[1]);
+  return ord[0][0] + (ord[1][1] >= ord[0][1] - 12 && ord[1][1] >= 55 ? ord[1][0] : "");
+}
+function toast(msg, err = false) {
+  const t = document.getElementById("toast");
+  t.textContent = msg; t.className = err ? "err" : ""; t.hidden = false;
+  clearTimeout(toast._t); toast._t = setTimeout(() => t.hidden = true, err ? 6000 : 2600);
+}
+function tela(nome) { ["telaLogin", "telaAviso", "telaApp"].forEach(id => document.getElementById(id).hidden = id !== nome); }
+function aviso(titulo, texto, comSair = true) {
+  document.getElementById("avisoTitulo").textContent = titulo;
+  document.getElementById("avisoTexto").textContent = texto;
+  document.getElementById("avisoSair").hidden = !comSair;
+  tela("telaAviso");
+}
+
+/* ---------- dados ---------- */
+// O banco usa d/i/s/c em minúsculas; a tela usa D/I/S/C
+const doBanco = (t, r) => t === "disc" ? { ...r, D: r.d, I: r.i, S: r.s, C: r.c } : t === "avaliacoes" ? { ...r, media: Number(r.media) } : r;
+function erroMsg(e) {
+  if (e?.code === "42501" || /row-level security/i.test(e?.message || "")) return "Você não tem permissão para fazer isso.";
+  if (e?.code === "23503") return "Esse registro está ligado a outro e não pode ser alterado assim.";
+  return "Não foi possível salvar: " + (e?.message || "erro desconhecido") + ".";
+}
+async function carregar(tabelas = TABELAS) {
+  const lista = isAdmin() && tabelas === TABELAS ? [...tabelas, "perfis"] : tabelas;
+  const res = await Promise.all(lista.map(t => sb.from(t).select("*")));
+  res.forEach((r, i) => {
+    if (r.error) return toast("Não foi possível carregar " + lista[i] + ": " + r.error.message, true);
+    S[lista[i]] = r.data.map(x => doBanco(lista[i], x));
+  });
+  carregado = true; render();
+}
+async function save(tabela, id, dados) {
+  const payload = vazioParaNull(dados);
+  const { error } = id ? await sb.from(tabela).update(payload).eq("id", id) : await sb.from(tabela).insert(payload);
+  if (error) { toast(erroMsg(error), true); return false; }
+  await carregar([tabela]);
+  return true;
+}
+async function remove(tabela, id) {
+  const { error } = await sb.from(tabela).delete().eq("id", id);
+  if (error) { toast(erroMsg(error), true); return false; }
+  await carregar(TABELAS);
+  return true;
+}
+
+/* ---------- login ---------- */
+async function iniciar() {
+  if (!window.supabase || !window.CONFIG || /COLE_AQUI/.test(CONFIG.SUPABASE_URL + CONFIG.SUPABASE_ANON_KEY))
+    return aviso("Configuração pendente", "Preencha o arquivo config.js com a Project URL e a chave anon public do Supabase. O passo a passo está no arquivo LEIA-ME.", false);
+  sb = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
+  sb.auth.onAuthStateChange((ev) => { if (ev === "SIGNED_OUT") { me = null; carregado = false; tela("telaLogin"); } });
+  const { data: { session } } = await sb.auth.getSession();
+  if (session) entrar(session.user); else tela("telaLogin");
+}
+async function entrar(user) {
+  const { data: p, error } = await sb.from("perfis").select("*").eq("id", user.id).maybeSingle();
+  if (error) return aviso("Não foi possível entrar", "Erro ao ler seu perfil: " + error.message);
+  if (!p || !p.ativo) return aviso("Acesso ainda não liberado", "Seu login existe, mas o RH ainda não liberou o seu acesso. Fale com a administradora da plataforma.");
+  if (p.papel !== "admin" && !(p.setores || []).length) return aviso("Nenhum setor liberado", "Seu acesso está ativo, mas nenhum setor foi marcado para você. Peça ao RH para liberar os setores da sua equipe.");
+  me = p;
+  document.getElementById("meNome").textContent = p.nome || p.email;
+  document.getElementById("mePapel").textContent = isAdmin() ? "Administradora · acesso total" : "Gestor · " + setoresVisiveis().map(k => SETORES[k]).join(", ");
+  document.getElementById("tabUsuarios").hidden = !isAdmin();
+  const inicial = (location.hash || "").slice(1);
+  view = VIEWS[inicial] && inicial !== "perfil" && (inicial !== "usuarios" || isAdmin()) ? inicial : "painel";
+  F.setor = setoresVisiveis().length === 1 ? setoresVisiveis()[0] : "";
+  tela("telaApp"); render();
+  carregar();
+}
+document.getElementById("formLogin").addEventListener("submit", async e => {
+  e.preventDefault();
+  const btn = document.getElementById("l-btn"), err = document.getElementById("l-erro");
+  const email = document.getElementById("l-email").value.trim(), password = document.getElementById("l-senha").value;
+  err.hidden = true;
+  if (!email || !password) { err.textContent = "Informe e-mail e senha."; err.hidden = false; return; }
+  btn.disabled = true;
+  const { data, error } = await sb.auth.signInWithPassword({ email, password });
+  btn.disabled = false;
+  if (error) { err.textContent = /invalid/i.test(error.message) ? "E-mail ou senha incorretos." : /confirm/i.test(error.message) ? "Este e-mail ainda não foi confirmado. Fale com o RH." : error.message; err.hidden = false; return; }
+  document.getElementById("l-senha").value = "";
+  entrar(data.user);
+});
+
+/* ---------- modal ---------- */
+const modal = document.getElementById("modal"), mForm = document.getElementById("modalForm");
+let onSubmit = null;
+function openModal({ title, body, submit = "Salvar", danger = false, handler, wide = false }) {
+  document.getElementById("mTitle").textContent = title;
+  document.getElementById("mBody").innerHTML = body;
+  document.getElementById("mFoot").innerHTML = `<button type="button" class="btn" data-action="close-modal">Cancelar</button>${submit ? `<button type="submit" class="btn ${danger ? "danger solid" : "primary"}">${esc(submit)}</button>` : ""}`;
+  modal.style.width = wide ? "min(860px, calc(100vw - 32px))" : "";
+  onSubmit = handler;
+  if (!modal.open) modal.showModal();
+  mForm.querySelector("input:not([type=hidden]):not([readonly]), select, textarea")?.focus();
+}
+function closeModal() { modal.close(); onSubmit = null; }
+mForm.addEventListener("submit", async e => {
+  e.preventDefault();
+  if (!onSubmit) return;
+  const btn = mForm.querySelector("[type=submit]"); btn.disabled = true;
+  const ok = await onSubmit(new FormData(mForm), mForm);
+  btn.disabled = false;
+  if (ok !== false) closeModal();
+});
+function formErro(msg) {
+  let el = mForm.querySelector(".form-err");
+  if (!el) { el = document.createElement("p"); el.className = "form-err"; document.getElementById("mBody").prepend(el); }
+  el.textContent = msg; el.scrollIntoView({ block: "nearest" });
+  return false;
+}
+function confirmar(titulo, html, botao, acao) {
+  openModal({ title: titulo, body: html, submit: botao, danger: true, handler: async () => (await acao()) ? undefined : false });
+}
+
+/* ---------- formulários ---------- */
+function formColaborador(c = {}) {
+  const setorAtual = c.setor || F.setor || "";
+  openModal({
+    title: c.id ? "Editar colaborador" : "Novo colaborador",
+    body: `<div class="form-grid">
+      <div class="field full"><label class="req" for="f-nome">Nome completo</label><input type="text" id="f-nome" name="nome" value="${esc(c.nome)}"></div>
+      <div class="field"><label class="req" for="f-cargo">Cargo</label><input type="text" id="f-cargo" name="cargo" value="${esc(c.cargo)}"></div>
+      <div class="field"><label class="req" for="f-setor">Setor</label><select id="f-setor" name="setor"><option value="">Selecione…</option>${Object.entries(SETORES).map(([k, n]) => `<option value="${k}" ${k === setorAtual ? "selected" : ""}>${n}</option>`).join("")}</select></div>
+      <div class="field"><label for="f-gestor">Gestor direto</label><select id="f-gestor" name="gestor_id"><option value="">Sem gestor</option>${[...S.colaboradores].sort(byNome).filter(x => x.id !== c.id).map(x => `<option value="${esc(x.id)}" ${x.id === c.gestor_id ? "selected" : ""}>${esc(x.nome)}</option>`).join("")}</select></div>
+      <div class="field"><label for="f-matricula">Matrícula</label><input type="text" id="f-matricula" name="matricula" value="${esc(c.matricula)}"></div>
+      <div class="field"><label for="f-email">E-mail</label><input type="email" id="f-email" name="email" value="${esc(c.email)}"></div>
+      <div class="field"><label for="f-tel">Telefone</label><input type="tel" id="f-tel" name="telefone" value="${esc(c.telefone)}"></div>
+      <div class="field"><label for="f-adm">Data de admissão</label><input type="date" id="f-adm" name="admissao" value="${esc(c.admissao)}"></div>
+      <div class="field"><label for="f-nasc">Data de nascimento</label><input type="date" id="f-nasc" name="nascimento" value="${esc(c.nascimento)}"></div>
+      <div class="field"><label for="f-contrato">Tipo de contrato</label><select id="f-contrato" name="contrato">${CONTRATOS.map(t => `<option ${t === (c.contrato || "CLT") ? "selected" : ""}>${t}</option>`).join("")}</select></div>
+      <div class="field"><label for="f-status">Situação</label><select id="f-status" name="status">${STATUS.map(t => `<option ${t === (c.status || "Ativo") ? "selected" : ""}>${t}</option>`).join("")}</select></div>
+      <div class="field full"><label for="f-obs">Observações</label><textarea id="f-obs" name="observacoes">${esc(c.observacoes)}</textarea></div>
+    </div>`,
+    handler: async fd => {
+      const o = Object.fromEntries(fd);
+      o.nome = o.nome.trim(); o.cargo = o.cargo.trim();
+      if (!o.nome || !o.cargo || !o.setor) return formErro("Preencha nome, cargo e setor.");
+      if (!await save("colaboradores", c.id, o)) return false;
+      toast(c.id ? "Cadastro atualizado" : "Colaborador cadastrado");
+    }
+  });
+}
+
+function formSetor(s) {
+  openModal({
+    title: "Editar setor · " + SETORES[s.codigo],
+    body: `<div class="form-grid">
+      <div class="field full"><label for="s-resp">Responsável</label><select id="s-resp" name="responsavel_id"><option value="">Sem responsável</option>${[...S.colaboradores].sort(byNome).map(x => `<option value="${esc(x.id)}" ${x.id === s.responsavel_id ? "selected" : ""}>${esc(x.nome)}</option>`).join("")}</select></div>
+      <div class="field full"><label for="s-desc">Descrição</label><textarea id="s-desc" name="descricao">${esc(s.descricao)}</textarea></div>
+    </div>`,
+    handler: async fd => {
+      const { error } = await sb.from("setores").update(vazioParaNull(Object.fromEntries(fd))).eq("codigo", s.codigo);
+      if (error) { toast(erroMsg(error), true); return false; }
+      await carregar(["setores"]); toast("Setor atualizado");
+    }
+  });
+}
+
+function formDiscTeste(cid) {
+  if (!pessoas().length) return toast("Cadastre um colaborador antes de aplicar o teste.", true);
+  const grupos = DISC_GRUPOS.map((g, gi) => {
+    // embaralha a ordem de exibição de forma fixa por grupo
+    const ordem = [0, 1, 2, 3].sort((x, y) => ((x * 7 + gi * 3) % 4) - ((y * 7 + gi * 3) % 4));
+    const F4 = "DISC";
+    return `<div class="q-group" data-g="${gi}"><table><caption>Grupo ${gi + 1} de ${DISC_GRUPOS.length}</caption>
+      <thead><tr><th>Palavra</th><th>Mais</th><th>Menos</th></tr></thead><tbody>
+      ${ordem.map(k => `<tr><td>${esc(g[k])}</td>
+        <td><input type="radio" name="mais_${gi}" value="${F4[k]}" aria-label="Mais parecido: ${esc(g[k])}"></td>
+        <td><input type="radio" name="menos_${gi}" value="${F4[k]}" aria-label="Menos parecido: ${esc(g[k])}"></td></tr>`).join("")}
+      </tbody></table></div>`;
+  }).join("");
+  openModal({
+    title: "Aplicar teste DISC", wide: true, submit: "Calcular e salvar",
+    body: `<div class="form-grid">
+      <div class="field"><label class="req" for="d-colab">Colaborador</label><select id="d-colab" name="colaborador_id">${colabOptions(cid)}</select></div>
+      <div class="field"><label for="d-data">Data</label><input type="date" id="d-data" name="data" value="${hoje()}"></div>
+    </div>
+    <p class="muted small">Em cada grupo, marque a palavra que <b>mais</b> descreve a pessoa no trabalho e a que <b>menos</b> descreve. Responda pela primeira impressão. Leva cerca de 8 minutos.</p>
+    ${grupos}`,
+    handler: async fd => {
+      const cidSel = fd.get("colaborador_id");
+      if (!cidSel) return formErro("Escolha o colaborador.");
+      const mais = { D: 0, I: 0, S: 0, C: 0 }, menos = { D: 0, I: 0, S: 0, C: 0 };
+      let faltando = null;
+      mForm.querySelectorAll(".q-group").forEach(el => el.classList.remove("missing"));
+      for (let gi = 0; gi < DISC_GRUPOS.length; gi++) {
+        const m = fd.get("mais_" + gi), n = fd.get("menos_" + gi);
+        if (!m || !n || m === n) { faltando ??= gi; mForm.querySelector(`[data-g="${gi}"]`).classList.add("missing"); continue; }
+        mais[m]++; menos[n]++;
+      }
+      if (faltando !== null) {
+        mForm.querySelector(`[data-g="${faltando}"]`).scrollIntoView({ block: "center" });
+        return formErro("Marque uma palavra em “Mais” e outra diferente em “Menos” nos grupos destacados.");
+      }
+      const N = DISC_GRUPOS.length, v = {};
+      for (const f of "DISC") v[f] = Math.round((mais[f] - menos[f] + N) / (2 * N) * 100);
+      if (!await save("disc", null, { colaborador_id: cidSel, data: fd.get("data") || hoje(), d: v.D, i: v.I, s: v.S, c: v.C, perfil: perfilDe(v), origem: "Teste na plataforma", respostas: { mais, menos } })) return false;
+      toast("Resultado DISC salvo");
+    }
+  });
+}
+
+function formDiscExterno(cid) {
+  if (!pessoas().length) return toast("Cadastre um colaborador antes de registrar um resultado.", true);
+  openModal({
+    title: "Lançar resultado DISC",
+    body: `<p class="muted small">Use para lançar o resultado de um teste feito em outra ferramenta. Informe a intensidade de cada fator de 0 a 100.</p>
+    <div class="form-grid">
+      <div class="field"><label class="req" for="x-colab">Colaborador</label><select id="x-colab" name="colaborador_id">${colabOptions(cid)}</select></div>
+      <div class="field"><label for="x-data">Data do teste</label><input type="date" id="x-data" name="data" value="${hoje()}"></div>
+      ${"DISC".split("").map(f => `<div class="field"><label class="req" for="x-${f}"><span class="t-${f}">${f}</span> · ${FACTORS[f].nome}</label><input type="number" min="0" max="100" id="x-${f}" name="${f}"></div>`).join("")}
+      <div class="field full"><label for="x-origem">Origem</label><input type="text" id="x-origem" name="origem" placeholder="Ex.: ferramenta usada, consultoria"></div>
+      <div class="field full"><label for="x-obs">Observações</label><textarea id="x-obs" name="observacoes"></textarea></div>
+    </div>`,
+    handler: async fd => {
+      const o = Object.fromEntries(fd);
+      if (!o.colaborador_id) return formErro("Escolha o colaborador.");
+      const v = {};
+      for (const f of "DISC") { const n = Number(o[f]); if (o[f] === "" || isNaN(n) || n < 0 || n > 100) return formErro("Informe valores de 0 a 100 para D, I, S e C."); v[f] = Math.round(n); }
+      if (!await save("disc", null, { colaborador_id: o.colaborador_id, data: o.data || hoje(), d: v.D, i: v.I, s: v.S, c: v.C, perfil: perfilDe(v), origem: o.origem || "Resultado externo", observacoes: o.observacoes })) return false;
+      toast("Resultado DISC salvo");
+    }
+  });
+}
+
+function formAvaliacao(a = {}, cid) {
+  if (!pessoas().length) return toast("Não há colaboradores no seu escopo para avaliar.", true);
+  const ciclos = [...new Set(S.avaliacoes.map(x => x.ciclo).filter(Boolean))];
+  const notas = a.notas || {};
+  const ag = new Date();
+  openModal({
+    title: a.id ? "Editar avaliação" : "Nova avaliação de desempenho", wide: true,
+    body: `<div class="form-grid">
+      <div class="field"><label class="req" for="v-colab">Colaborador</label><select id="v-colab" name="colaborador_id">${colabOptions(a.colaborador_id || cid)}</select></div>
+      <div class="field"><label class="req" for="v-ciclo">Ciclo</label><input type="text" id="v-ciclo" name="ciclo" list="v-ciclos" value="${esc(a.ciclo || (ag.getFullYear() + " · " + (ag.getMonth() < 6 ? "1º" : "2º") + " semestre"))}"><datalist id="v-ciclos">${ciclos.map(c => `<option value="${esc(c)}">`).join("")}</datalist></div>
+      <div class="field"><label for="v-data">Data</label><input type="date" id="v-data" name="data" value="${esc(a.data || hoje())}"></div>
+      <div class="field"><label for="v-avaliador">Avaliador</label><input type="text" id="v-avaliador" name="avaliador" value="${esc(a.avaliador ?? me.nome)}"></div>
+    </div>
+    <div><p class="lbl">Competências <span class="muted">· 1 abaixo do esperado, 3 atende, 5 supera</span></p>
+    ${COMPETENCIAS.map(([n, d], i) => `<div class="comp-row"><div><b>${esc(n)}</b><small>${esc(d)}</small></div>
+      <div class="scale" role="radiogroup" aria-label="${esc(n)}">${[1,2,3,4,5].map(v => `<label><input type="radio" name="comp_${i}" value="${v}" ${notas[n] == v ? "checked" : ""}><span>${v}</span></label>`).join("")}</div></div>`).join("")}
+    </div>
+    <div class="form-grid">
+      <div class="field"><label class="req" for="v-pot">Potencial</label><select id="v-pot" name="potencial">${["Baixo", "Médio", "Alto"].map(p => `<option ${p === (a.potencial || "Médio") ? "selected" : ""}>${p}</option>`).join("")}</select></div>
+      <div class="field full"><label for="v-fortes">Pontos fortes</label><textarea id="v-fortes" name="pontos_fortes">${esc(a.pontos_fortes)}</textarea></div>
+      <div class="field full"><label for="v-desenv">Pontos a desenvolver</label><textarea id="v-desenv" name="desenvolver">${esc(a.desenvolver)}</textarea></div>
+      <div class="field full"><label for="v-pdi">Plano de desenvolvimento (PDI) e metas</label><textarea id="v-pdi" name="pdi">${esc(a.pdi)}</textarea></div>
+    </div>`,
+    handler: async fd => {
+      const o = Object.fromEntries(fd);
+      if (!o.colaborador_id || !o.ciclo.trim()) return formErro("Escolha o colaborador e informe o ciclo.");
+      const n = {};
+      for (let i = 0; i < COMPETENCIAS.length; i++) { const v = fd.get("comp_" + i); if (!v) return formErro(`Dê uma nota para “${COMPETENCIAS[i][0]}”.`); n[COMPETENCIAS[i][0]] = Number(v); }
+      const media = Math.round(Object.values(n).reduce((s, x) => s + x, 0) / COMPETENCIAS.length * 10) / 10;
+      const rec = { colaborador_id: o.colaborador_id, ciclo: o.ciclo.trim(), data: o.data || hoje(), avaliador: o.avaliador, notas: n, media, potencial: o.potencial, pontos_fortes: o.pontos_fortes, desenvolver: o.desenvolver, pdi: o.pdi };
+      if (!await save("avaliacoes", a.id, rec)) return false;
+      toast("Avaliação salva · média " + fmtNota(media));
+    }
+  });
+}
+
+function formFeedback(f = {}, cid) {
+  if (!pessoas().length) return toast("Não há colaboradores no seu escopo.", true);
+  openModal({
+    title: f.id ? "Editar feedback" : "Registrar feedback",
+    body: `<div class="form-grid">
+      <div class="field"><label class="req" for="b-colab">Colaborador</label><select id="b-colab" name="colaborador_id">${colabOptions(f.colaborador_id || cid)}</select></div>
+      <div class="field"><label for="b-tipo">Tipo</label><select id="b-tipo" name="tipo">${TIPOS_FB.map(t => `<option ${t === f.tipo ? "selected" : ""}>${t}</option>`).join("")}</select></div>
+      <div class="field"><label for="b-data">Data</label><input type="date" id="b-data" name="data" value="${esc(f.data || hoje())}"></div>
+      <div class="field"><label for="b-autor">Quem deu o feedback</label><input type="text" id="b-autor" name="autor" value="${esc(f.autor ?? me.nome)}"></div>
+      <div class="field full"><label class="req" for="b-titulo">Assunto</label><input type="text" id="b-titulo" name="titulo" value="${esc(f.titulo)}"></div>
+      <div class="field full"><label class="req" for="b-texto">O que foi conversado</label><textarea id="b-texto" name="texto" style="min-height:120px">${esc(f.texto)}</textarea></div>
+      <div class="field full"><label for="b-plano">Combinados e plano de ação</label><textarea id="b-plano" name="plano_acao">${esc(f.plano_acao)}</textarea></div>
+      <div class="field"><label for="b-prox">Próximo acompanhamento</label><input type="date" id="b-prox" name="proximo" value="${esc(f.proximo)}"></div>
+    </div>`,
+    handler: async fd => {
+      const o = Object.fromEntries(fd);
+      o.titulo = o.titulo.trim();
+      if (!o.colaborador_id || !o.titulo || !o.texto.trim()) return formErro("Preencha colaborador, assunto e o que foi conversado.");
+      if (!await save("feedbacks", f.id, o)) return false;
+      toast("Feedback salvo");
+    }
+  });
+}
+
+function formUsuario(u) {
+  const novo = !u;
+  u = u || { papel: "gestor", setores: [], ativo: true };
+  const proprio = u.id === me.id;
+  openModal({
+    title: novo ? "Novo usuário" : "Editar acesso · " + (u.nome || u.email),
+    body: `<div class="form-grid">
+      <div class="field full"><label class="req" for="u-nome">Nome</label><input type="text" id="u-nome" name="nome" value="${esc(u.nome)}"></div>
+      <div class="field"><label class="req" for="u-email">E-mail de login</label><input type="email" id="u-email" name="email" value="${esc(u.email)}" ${novo ? "" : "readonly"}></div>
+      ${novo ? `<div class="field"><label class="req" for="u-senha">Senha provisória</label><input type="text" id="u-senha" name="senha" autocomplete="off" placeholder="Mínimo de 8 caracteres"></div>` : ""}
+      <div class="field"><label for="u-papel">Perfil</label><select id="u-papel" name="papel" ${proprio ? "disabled" : ""}><option value="gestor" ${u.papel === "gestor" ? "selected" : ""}>Gestor</option><option value="admin" ${u.papel === "admin" ? "selected" : ""}>Administrador (acesso total)</option></select></div>
+      ${novo ? "" : `<div class="field"><label for="u-ativo">Situação</label><select id="u-ativo" name="ativo" ${proprio ? "disabled" : ""}><option value="1" ${u.ativo ? "selected" : ""}>Acesso liberado</option><option value="0" ${!u.ativo ? "selected" : ""}>Acesso bloqueado</option></select></div>`}
+      <div class="field full"><span class="lbl">Setores que pode visualizar</span>
+        <div class="checks">${Object.entries(SETORES).map(([k, n]) => `<label><input type="checkbox" name="setores" value="${k}" ${(u.setores || []).includes(k) ? "checked" : ""}> ${n}</label>`).join("")}</div>
+        <small class="muted">Administradores veem todos os setores, independentemente desta marcação.</small></div>
+    </div>
+    <div class="small muted"><b>O que um gestor pode fazer:</b> ver os colaboradores e os resultados DISC dos setores marcados, registrar avaliações e feedbacks dessas pessoas e editar o que ele mesmo registrou. Não pode cadastrar colaboradores nem aplicar ou lançar testes DISC.</div>
+    ${novo ? `<p class="small muted">Envie o e-mail e a senha provisória ao gestor. Ele pode trocar a senha em “Minha senha” depois de entrar.</p>` : ""}`,
+    handler: async fd => {
+      const nome = (fd.get("nome") || "").trim(), setores = fd.getAll("setores");
+      const papel = proprio ? u.papel : fd.get("papel");
+      if (!nome) return formErro("Informe o nome.");
+      if (papel === "gestor" && !setores.length) return formErro("Marque ao menos um setor para o gestor.");
+      let id = u.id;
+      if (novo) {
+        const email = (fd.get("email") || "").trim(), senha = fd.get("senha") || "";
+        if (!email) return formErro("Informe o e-mail de login.");
+        if (senha.length < 8) return formErro("A senha provisória precisa ter ao menos 8 caracteres.");
+        // cliente separado para criar o login sem encerrar a sessão da administradora
+        const tmp = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY, { auth: { persistSession: false, autoRefreshToken: false, storageKey: "gg-cadastro" } });
+        const { data, error } = await tmp.auth.signUp({ email, password: senha, options: { data: { nome } } });
+        if (error) return formErro(/registered|already/i.test(error.message) ? "Já existe um login com esse e-mail." : /password/i.test(error.message) ? "Senha fraca: use letras e números, com ao menos 8 caracteres." : "Não foi possível criar o login: " + error.message);
+        if (!data.user || (data.user.identities && !data.user.identities.length)) return formErro("Já existe um login com esse e-mail.");
+        id = data.user.id;
+      }
+      const dados = { nome, setores, papel, ativo: novo ? true : proprio ? true : fd.get("ativo") === "1" };
+      const { data: up, error } = await sb.from("perfis").update(dados).eq("id", id).select();
+      if (error || !up?.length) { toast(error ? erroMsg(error) : "O login foi criado, mas o perfil não foi encontrado. Confira se o schema.sql foi rodado.", true); return false; }
+      await carregar(["perfis"]);
+      toast(novo ? "Usuário criado. Envie o login e a senha ao gestor." : "Acesso atualizado");
+    }
+  });
+}
+
+function formMinhaSenha() {
+  openModal({
+    title: "Alterar minha senha", submit: "Alterar senha",
+    body: `<div class="form-grid">
+      <div class="field full"><label class="req" for="p-nova">Nova senha</label><input type="password" id="p-nova" name="nova" autocomplete="new-password"></div>
+      <div class="field full"><label class="req" for="p-conf">Repita a nova senha</label><input type="password" id="p-conf" name="conf" autocomplete="new-password"></div>
+    </div>`,
+    handler: async fd => {
+      const n = fd.get("nova") || "";
+      if (n.length < 8) return formErro("Use ao menos 8 caracteres.");
+      if (n !== fd.get("conf")) return formErro("As duas senhas não são iguais.");
+      const { error } = await sb.auth.updateUser({ password: n });
+      if (error) return formErro("Não foi possível alterar: " + error.message);
+      toast("Senha alterada");
+    }
+  });
+}
+
+/* ---------- blocos ---------- */
+function discBars(d) {
+  return `<div class="bars">${"DISC".split("").map(f => `<div class="bar-row"><span><b class="t-${f}">${f}</b> ${FACTORS[f].nome}</span>
+    <div class="bar-track"><div class="bar-fill f-${f}" style="width:${d[f]}%"></div></div><span class="num">${d[f]}</span></div>`).join("")}</div>`;
+}
+const emptyState = (titulo, texto, acao) => `<div class="empty"><b>${titulo}</b><span>${texto}</span>${acao || ""}</div>`;
+function feedbackCard(f, comNome = true) {
+  const c = colab(f.colaborador_id);
+  return `<article class="fb">
+    <div class="meta">${comNome ? `<span class="person">${avatar(c)}<b style="color:var(--ink)">${esc(nomeDe(f.colaborador_id))}</b></span>·` : ""}
+      <span class="pill tipo-${esc((f.tipo || "").split(" ")[0])}">${esc(f.tipo)}</span><span class="num">${fmtData(f.data)}</span>${f.autor ? `<span>por ${esc(f.autor)}</span>` : ""}
+      ${meus(f) ? `<span style="margin-left:auto" class="actions"><button type="button" class="btn link sm" data-action="edit-feedback" data-id="${esc(f.id)}">Editar</button><button type="button" class="btn link sm danger" data-action="del-feedback" data-id="${esc(f.id)}">Excluir</button></span>` : ""}</div>
+    <h3>${esc(f.titulo)}</h3>
+    <p class="txt">${esc(f.texto)}</p>
+    ${f.plano_acao ? `<div class="plan"><span class="eyebrow">Combinados</span><br>${esc(f.plano_acao)}</div>` : ""}
+    ${f.proximo ? `<p class="small muted">Próximo acompanhamento: <b class="num">${fmtData(f.proximo)}</b></p>` : ""}
+  </article>`;
+}
+function seletorSetor() {
+  const vs = setoresVisiveis();
+  if (vs.length < 2) return vs.length ? `<div class="scope"><span class="eyebrow">Setor</span><span class="tag">${SETORES[vs[0]]}</span></div>` : "";
+  return `<div class="scope" role="group" aria-label="Filtrar por setor"><span class="eyebrow">Setor</span>
+    <button type="button" class="chip" data-action="setor" data-setor="" aria-pressed="${!F.setor}">Todos</button>
+    ${vs.map(k => `<button type="button" class="chip" data-action="setor" data-setor="${k}" aria-pressed="${F.setor === k}">${SETORES[k]}</button>`).join("")}</div>`;
+}
+
+/* ---------- telas ---------- */
+const VIEWS = {
+  painel() {
+    const at = ativos();
+    const comDisc = at.filter(c => ultimoDisc(c.id));
+    const avals = at.map(c => ultimaAval(c.id)).filter(Boolean);
+    const media = avals.length ? avals.reduce((s, a) => s + a.media, 0) / avals.length : null;
+    const limite = new Date(Date.now() - 30 * 864e5).toISOString().slice(0, 10);
+    const fbs = S.feedbacks.filter(f => noEscopo(f.colaborador_id));
+    const fb30 = fbs.filter(f => (f.data || "") >= limite).length;
+    const dist = { D: 0, I: 0, S: 0, C: 0 };
+    comDisc.forEach(c => dist[ultimoDisc(c.id).perfil[0]]++);
+    const semAval = at.filter(c => !ultimaAval(c.id));
+    const semDisc = at.filter(c => !ultimoDisc(c.id));
+    const prox = fbs.filter(f => f.proximo && f.proximo >= hoje()).sort((a, b) => a.proximo.localeCompare(b.proximo)).slice(0, 5);
+    const porSetor = setoresVisiveis().filter(k => !F.setor || k === F.setor).map(k => [k, at.filter(c => c.setor === k).length]);
+    const maxA = Math.max(1, ...porSetor.map(x => x[1]));
+    return `<div class="head"><div><h1>Olá, ${esc((me.nome || "").split(" ")[0])}</h1><p>Visão geral da equipe, dos perfis comportamentais e do acompanhamento de desempenho.</p></div>
+        <div class="actions">${isAdmin() ? `<button type="button" class="btn primary" data-action="new-colab">Novo colaborador</button>` : `<button type="button" class="btn primary" data-action="new-feedback">Registrar feedback</button>`}</div></div>
+      ${seletorSetor()}
+      <div class="kpis">
+        <div class="kpi"><span>Colaboradores ativos</span><b>${at.length}</b><span>${pessoas().length - at.length} desligado(s)</span></div>
+        <div class="kpi"><span>Mapeados no DISC</span><b>${at.length ? Math.round(comDisc.length / at.length * 100) : 0}%</b><span>${comDisc.length} de ${at.length} pessoas</span></div>
+        <div class="kpi"><span>Média de desempenho</span><b>${media === null ? "—" : fmtNota(media)}</b><span>última avaliação de cada pessoa · escala 1 a 5</span></div>
+        <div class="kpi"><span>Feedbacks em 30 dias</span><b>${fb30}</b><span>${fbs.length} registrados no total</span></div>
+      </div>
+      <div class="grid-2">
+        <section class="panel"><header><h2>Perfis DISC da equipe</h2><button type="button" class="btn link" data-action="go" data-view="disc">Ver testes</button></header>
+          ${comDisc.length ? `<div class="stack">${"DISC".split("").filter(f => dist[f]).map(f => `<div class="f-${f}" style="width:${dist[f] / comDisc.length * 100}%">${dist[f]}</div>`).join("")}</div>
+          <div class="legend">${"DISC".split("").map(f => `<span><i class="f-${f}"></i>${FACTORS[f].nome} <b class="num">${dist[f]}</b></span>`).join("")}</div>
+          <p class="small muted" style="margin-top:12px">Pelo fator predominante do teste mais recente de cada pessoa.</p>`
+          : emptyState("Nenhum teste registrado", isAdmin() ? "Aplique o DISC para ver a composição comportamental da equipe." : "Os resultados aparecem aqui quando o RH registrar os testes.", isAdmin() ? `<button type="button" class="btn sm" data-action="disc-teste">Aplicar teste</button>` : "")}
+        </section>
+        <section class="panel"><header><h2>Pessoas por setor</h2><button type="button" class="btn link" data-action="go" data-view="estrutura">Ver estrutura</button></header>
+          <div class="bars">${porSetor.map(([k, n]) => `<div class="bar-row" style="grid-template-columns:minmax(0,170px) minmax(0,1fr) 34px"><span>${SETORES[k]}</span><div class="bar-track"><div class="bar-fill" style="width:${n / maxA * 100}%;background:var(--accent)"></div></div><span class="num">${n}</span></div>`).join("")}</div>
+        </section>
+      </div>
+      <div class="grid-3">
+        ${isAdmin() ? `<section class="panel"><header><h2>Sem teste DISC</h2><span class="pill plain num">${semDisc.length}</span></header>
+          <div class="list">${semDisc.slice(0, 6).map(c => `<div class="list-item"><div class="grow person" data-action="perfil" data-id="${esc(c.id)}" style="cursor:pointer">${avatar(c)}<div><b>${esc(c.nome)}</b><small>${esc(c.cargo)}</small></div></div><button type="button" class="btn sm" data-action="disc-teste" data-id="${esc(c.id)}">Aplicar</button></div>`).join("") || `<p class="muted small">Toda a equipe ativa já foi mapeada.</p>`}</div>
+        </section>` : ""}
+        <section class="panel"><header><h2>Sem avaliação</h2><span class="pill plain num">${semAval.length}</span></header>
+          <div class="list">${semAval.slice(0, 6).map(c => `<div class="list-item"><div class="grow person" data-action="perfil" data-id="${esc(c.id)}" style="cursor:pointer">${avatar(c)}<div><b>${esc(c.nome)}</b><small>${esc(c.cargo)}</small></div></div><button type="button" class="btn sm" data-action="new-aval" data-id="${esc(c.id)}">Avaliar</button></div>`).join("") || `<p class="muted small">Todos têm ao menos uma avaliação.</p>`}</div>
+        </section>
+        <section class="panel"><header><h2>Próximos acompanhamentos</h2></header>
+          <div class="list">${prox.map(f => `<div class="list-item"><div class="grow"><b>${esc(nomeDe(f.colaborador_id))}</b><p class="small muted">${esc(f.titulo)}</p></div><span class="pill plain num">${fmtData(f.proximo)}</span></div>`).join("") || `<p class="muted small">Nenhum acompanhamento agendado. Defina a data ao registrar um feedback.</p>`}</div>
+        </section>
+      </div>`;
+  },
+
+  colaboradores() {
+    return `<div class="head"><div><h1>Colaboradores</h1><p>${isAdmin() ? "Cadastro da equipe." : "Equipe dos setores liberados para você."} Clique em uma pessoa para ver a ficha com DISC, avaliações e feedbacks.</p></div>
+        <div class="actions">${isAdmin() ? `<button type="button" class="btn primary" data-action="new-colab">Novo colaborador</button>` : ""}</div></div>
+      ${seletorSetor()}
+      <section class="panel">
+        <div class="toolbar" style="margin-bottom:12px">
+          <input type="search" id="q-busca" data-filter="busca" placeholder="Buscar por nome, cargo ou matrícula" value="${esc(F.busca)}" aria-label="Buscar colaborador">
+          <select id="q-status" data-filter="status" aria-label="Filtrar por situação"><option value="">Todas as situações</option>${STATUS.map(s => `<option ${F.status === s ? "selected" : ""}>${s}</option>`).join("")}</select>
+        </div>
+        <div id="lista"></div>
+      </section>`;
+  },
+
+  perfil() {
+    const c = colab(perfilId);
+    if (!c) return emptyState("Colaborador não encontrado", "Esse cadastro pode ter sido excluído ou não pertence aos seus setores.", `<button type="button" class="btn" data-action="go" data-view="colaboradores">Voltar à lista</button>`);
+    const discs = S.disc.filter(d => d.colaborador_id === c.id).sort(byDataDesc);
+    const avs = S.avaliacoes.filter(a => a.colaborador_id === c.id).sort(byDataDesc);
+    const fbs = S.feedbacks.filter(f => f.colaborador_id === c.id).sort(byDataDesc);
+    const g = colab(c.gestor_id), d = discs[0];
+    const equipe = S.colaboradores.filter(x => x.gestor_id === c.id);
+    const adm = isAdmin();
+    return `<div><button type="button" class="btn link" data-action="go" data-view="colaboradores">← Colaboradores</button></div>
+      <section class="panel">
+        <div class="profile-head">${avatar(c, "lg")}
+          <div class="grow"><h1>${esc(c.nome)}</h1><p class="muted">${esc(c.cargo)} · ${esc(SETORES[c.setor])}</p><div class="actions">${statusPill(c.status)}${discChip(d)}</div></div>
+          ${adm ? `<div class="actions"><button type="button" class="btn" data-action="edit-colab" data-id="${esc(c.id)}">Editar cadastro</button><button type="button" class="btn danger" data-action="del-colab" data-id="${esc(c.id)}">Excluir</button></div>` : ""}
+        </div>
+        <hr style="border:0;border-top:1px solid var(--line);margin:18px 0">
+        <div class="info-grid">
+          <div><span>Matrícula</span><b>${esc(c.matricula || "—")}</b></div>
+          <div><span>E-mail</span><b>${esc(c.email || "—")}</b></div>
+          <div><span>Telefone</span><b>${esc(c.telefone || "—")}</b></div>
+          <div><span>Gestor direto</span><b>${g ? `<a href="#" data-action="perfil" data-id="${esc(g.id)}" style="color:var(--accent)">${esc(g.nome)}</a>` : "—"}</b></div>
+          <div><span>Admissão</span><b class="num">${fmtData(c.admissao)}</b></div>
+          <div><span>Nascimento</span><b class="num">${fmtData(c.nascimento)}</b></div>
+          <div><span>Contrato</span><b>${esc(c.contrato || "—")}</b></div>
+          <div><span>Liderados diretos</span><b>${equipe.length ? equipe.map(e => esc(e.nome)).join(", ") : "—"}</b></div>
+        </div>
+        ${c.observacoes ? `<p style="margin-top:16px;white-space:pre-wrap" class="muted">${esc(c.observacoes)}</p>` : ""}
+      </section>
+      <div class="grid-2">
+        <section class="panel"><header><h2>Perfil DISC</h2>${adm ? `<div class="actions"><button type="button" class="btn sm" data-action="disc-teste" data-id="${esc(c.id)}">Aplicar teste</button><button type="button" class="btn sm" data-action="disc-externo" data-id="${esc(c.id)}">Lançar resultado</button></div>` : ""}</header>
+          ${d ? `${discBars(d)}
+            <p style="margin-top:14px"><b class="t-${d.perfil[0]}">${FACTORS[d.perfil[0]].nome}</b>${d.perfil[1] ? ` com traços de <b class="t-${d.perfil[1]}">${FACTORS[d.perfil[1]].nome}</b>` : ""}. ${esc(FACTORS[d.perfil[0]].resumo)}</p>
+            <p class="small" style="margin-top:8px"><b>Como liderar:</b> ${esc(FACTORS[d.perfil[0]].liderar)}</p>
+            <p class="small muted" style="margin-top:8px">${esc(d.origem)} · <span class="num">${fmtData(d.data)}</span></p>
+            ${discs.length > 1 ? `<p class="eyebrow" style="margin-top:14px">Histórico</p><div class="list">${discs.slice(1).map(x => `<div class="list-item"><span class="num small">${fmtData(x.data)}</span>${discChip(x)}<span class="small muted grow num">D ${x.D} · I ${x.I} · S ${x.S} · C ${x.C}</span>${adm ? `<button type="button" class="btn link sm danger" data-action="del-disc" data-id="${esc(x.id)}">Excluir</button>` : ""}</div>`).join("")}</div>` : ""}
+            ${adm ? `<div style="margin-top:8px"><button type="button" class="btn link sm danger" data-action="del-disc" data-id="${esc(d.id)}">Excluir resultado atual</button></div>` : ""}`
+          : emptyState("Sem teste DISC", adm ? "Aplique o questionário aqui mesmo ou lance um resultado de outra ferramenta." : "O RH ainda não registrou um teste para esta pessoa.")}
+        </section>
+        <section class="panel"><header><h2>Avaliações de desempenho</h2><button type="button" class="btn sm" data-action="new-aval" data-id="${esc(c.id)}">Nova avaliação</button></header>
+          ${avs.length ? `<div class="list">${avs.map(v => `<div class="list-item"><div class="grow"><b>${esc(v.ciclo)}</b><p class="small muted">${fmtData(v.data)}${v.avaliador ? " · " + esc(v.avaliador) : ""} · potencial ${esc(v.potencial).toLowerCase()}</p>
+              ${v.pdi ? `<p class="small" style="margin-top:4px;white-space:pre-wrap"><b>PDI:</b> ${esc(v.pdi)}</p>` : ""}</div>
+              <div style="text-align:right"><span class="score">${fmtNota(v.media)}</span><br>${dots(v.media)}<br><button type="button" class="btn link sm" data-action="ver-aval" data-id="${esc(v.id)}">Ver</button></div></div>`).join("")}</div>`
+          : emptyState("Sem avaliações", "Registre a primeira avaliação para acompanhar a evolução.")}
+        </section>
+      </div>
+      <section class="panel"><header><h2>Feedbacks</h2><button type="button" class="btn sm primary" data-action="new-feedback" data-id="${esc(c.id)}">Registrar feedback</button></header>
+        ${fbs.length ? `<div style="display:flex;flex-direction:column;gap:12px">${fbs.map(f => feedbackCard(f, false)).join("")}</div>` : emptyState("Nenhum feedback salvo", "Registre conversas, reconhecimentos e combinados para manter o histórico.")}
+      </section>`;
+  },
+
+  disc() {
+    const at = ativos();
+    const linhas = at.map(c => [c, ultimoDisc(c.id)]).sort((a, b) => !!b[1] - !!a[1] || byNome(a[0], b[0]));
+    return `<div class="head"><div><h1>Testes DISC</h1><p>Mapeamento comportamental em quatro fatores.${isAdmin() ? " Aplique o questionário de 16 grupos na plataforma ou lance resultados de outra ferramenta." : " Os testes são aplicados e registrados pelo RH."}</p></div>
+        ${isAdmin() ? `<div class="actions"><button type="button" class="btn" data-action="disc-externo">Lançar resultado</button><button type="button" class="btn primary" data-action="disc-teste">Aplicar teste</button></div>` : ""}</div>
+      ${seletorSetor()}
+      <div class="factor-cards">${"DISC".split("").map(f => `<div class="factor" style="border-top-color:var(--${f.toLowerCase()})">
+        <span class="letter t-${f}">${f}</span><h3>${FACTORS[f].nome}</h3><p class="small">${esc(FACTORS[f].resumo)}</p>
+        <p class="eyebrow">Forças</p><ul>${FACTORS[f].fortes.map(x => `<li>${x}</li>`).join("")}</ul>
+        <p class="eyebrow">Pontos de atenção</p><ul>${FACTORS[f].atencao.map(x => `<li>${x}</li>`).join("")}</ul></div>`).join("")}</div>
+      <section class="panel"><header><h2>Resultados da equipe</h2><span class="muted small">Teste mais recente de cada pessoa ativa</span></header>
+        ${at.length ? `<div class="table-wrap"><table><thead><tr><th>Colaborador</th><th>Setor</th><th>Perfil</th><th>D</th><th>I</th><th>S</th><th>C</th><th>Data</th>${isAdmin() ? "<th></th>" : ""}</tr></thead><tbody>
+          ${linhas.map(([c, d]) => `<tr class="click" data-action="perfil" data-id="${esc(c.id)}"><td><div class="person">${avatar(c)}<div><b>${esc(c.nome)}</b><small>${esc(c.cargo)}</small></div></div></td><td><span class="tag">${esc(SETORES[c.setor])}</span></td>
+            <td>${discChip(d)}</td>${"DISC".split("").map(f => `<td class="num ${d && d.perfil.includes(f) ? "t-" + f : "muted"}" style="font-weight:700">${d ? d[f] : "—"}</td>`).join("")}
+            <td class="num">${d ? fmtData(d.data) : "—"}</td>${isAdmin() ? `<td>${d ? "" : `<button type="button" class="btn sm" data-action="disc-teste" data-id="${esc(c.id)}">Aplicar</button>`}</td>` : ""}</tr>`).join("")}
+          </tbody></table></div>` : emptyState("Nenhum colaborador neste setor", isAdmin() ? "Cadastre a equipe para começar a aplicar os testes." : "Ainda não há colaboradores cadastrados nos seus setores.")}
+      </section>`;
+  },
+
+  desempenho() {
+    const doEscopo = S.avaliacoes.filter(a => noEscopo(a.colaborador_id));
+    const ciclos = [...new Set(doEscopo.map(a => a.ciclo))].sort().reverse();
+    const lista = doEscopo.filter(a => !F.ciclo || a.ciclo === F.ciclo).sort(byDataDesc);
+    // 9 Box: avaliação mais recente de cada pessoa dentro do filtro
+    const ult = {};
+    lista.forEach(a => { if (!ult[a.colaborador_id]) ult[a.colaborador_id] = a; });
+    const box = [[[], [], []], [[], [], []], [[], [], []]];
+    Object.values(ult).forEach(a => box[potIdx(a.potencial)][nivel(a.media)].push(colab(a.colaborador_id)));
+    const rows = [["alto", 2], ["medio", 1], ["baixo", 0]];
+    const comp = COMPETENCIAS.map(([n]) => { const v = Object.values(ult).map(a => a.notas?.[n]).filter(Boolean); return [n, v.length ? v.reduce((s, x) => s + x, 0) / v.length : 0]; });
+    return `<div class="head"><div><h1>Avaliação de desempenho</h1><p>Notas por competência, potencial e plano de desenvolvimento. A matriz 9 Box cruza desempenho e potencial da avaliação mais recente.</p></div>
+        <div class="actions"><select id="q-ciclo" data-filter="ciclo" aria-label="Filtrar por ciclo" style="width:auto"><option value="">Todos os ciclos</option>${ciclos.map(c => `<option ${F.ciclo === c ? "selected" : ""}>${esc(c)}</option>`).join("")}</select><button type="button" class="btn primary" data-action="new-aval">Nova avaliação</button></div></div>
+      ${seletorSetor()}
+      <div class="grid-2">
+        <section class="panel"><header><h2>Matriz 9 Box</h2><span class="muted small num">${Object.keys(ult).length} pessoa(s)</span></header>
+          <div class="ninebox">
+            <div class="nb-axis v" style="grid-row:1/4">Potencial →</div>
+            ${rows.map(([k, p]) => [0, 1, 2].map(dsp => `<div class="nb-cell ${p + dsp >= 3 ? "hot" : ""}"><span class="nb-t">${NINE[k][dsp]}</span><div class="nb-people">${box[p][dsp].map(c => `<button type="button" class="av" style="--h:${hue(c.id)}" title="${esc(c.nome)}" data-action="perfil" data-id="${esc(c.id)}">${esc(iniciais(c.nome))}</button>`).join("")}</div></div>`).join("")).join("")}
+            <div></div><div class="nb-axis" style="grid-column:2/5">Desempenho →</div>
+          </div>
+          <p class="small muted" style="margin-top:10px">Desempenho: média abaixo de 3 = baixo, de 3 a 3,9 = médio, 4 ou mais = alto.</p>
+        </section>
+        <section class="panel"><header><h2>Média por competência</h2></header>
+          ${Object.keys(ult).length ? `<div class="bars">${comp.map(([n, v]) => `<div class="bar-row" style="grid-template-columns:minmax(0,170px) minmax(0,1fr) 34px"><span>${esc(n)}</span><div class="bar-track"><div class="bar-fill" style="width:${v / 5 * 100}%;background:${v < 3 ? "var(--warn)" : "var(--accent)"}"></div></div><span class="num">${fmtNota(v)}</span></div>`).join("")}</div>`
+          : emptyState("Sem avaliações no período", "As médias aparecem aqui depois da primeira avaliação.")}
+        </section>
+      </div>
+      <section class="panel"><header><h2>Avaliações registradas</h2></header>
+        ${lista.length ? `<div class="table-wrap"><table><thead><tr><th>Colaborador</th><th>Ciclo</th><th>Avaliador</th><th>Data</th><th>Média</th><th>Potencial</th><th></th></tr></thead><tbody>
+          ${lista.map(a => { const c = colab(a.colaborador_id); return `<tr><td><div class="person">${avatar(c)}<div><b>${esc(nomeDe(a.colaborador_id))}</b><small>${esc(c?.cargo)}</small></div></div></td><td>${esc(a.ciclo)}</td><td>${esc(a.avaliador || "—")}</td><td class="num">${fmtData(a.data)}</td>
+            <td><span class="score">${fmtNota(a.media)}</span> ${dots(a.media)}</td><td>${esc(a.potencial)}</td>
+            <td style="white-space:nowrap"><button type="button" class="btn link sm" data-action="ver-aval" data-id="${esc(a.id)}">Ver</button>${meus(a) ? `<button type="button" class="btn link sm" data-action="edit-aval" data-id="${esc(a.id)}">Editar</button><button type="button" class="btn link sm danger" data-action="del-aval" data-id="${esc(a.id)}">Excluir</button>` : ""}</td></tr>`; }).join("")}
+          </tbody></table></div>` : emptyState("Nenhuma avaliação registrada", "Avalie competências de 1 a 5, indique o potencial e registre o PDI.", `<button type="button" class="btn sm primary" data-action="new-aval">Nova avaliação</button>`)}
+      </section>`;
+  },
+
+  estrutura() {
+    const vis = ativos();
+    const ids = new Set(vis.map(c => c.id));
+    const filhos = id => vis.filter(c => c.gestor_id === id).sort(byNome);
+    const raizes = vis.filter(c => !c.gestor_id || !ids.has(c.gestor_id)).sort(byNome);
+    const visto = new Set();
+    const no = c => { if (visto.has(c.id)) return ""; visto.add(c.id); const f = filhos(c.id);
+      return `<li><span class="node" data-action="perfil" data-id="${esc(c.id)}" role="button" tabindex="0">${avatar(c)}<span><b>${esc(c.nome)}</b> <small>${esc(c.cargo)} · ${esc(SETORES[c.setor])}</small></span></span>${f.length ? `<ul>${f.map(no).join("")}</ul>` : ""}</li>`; };
+    const setores = setoresVisiveis().filter(k => !F.setor || k === F.setor);
+    return `<div class="head"><div><h1>Estrutura organizacional</h1><p>Setores da empresa e organograma montado a partir do gestor direto de cada colaborador.</p></div></div>
+      ${seletorSetor()}
+      <div class="areas">${setores.map(k => { const s = S.setores.find(x => x.codigo === k) || { codigo: k }; const m = vis.filter(c => c.setor === k).sort(byNome); const r = colab(s.responsavel_id);
+        return `<article class="area"><header><div><h3>${SETORES[k]}</h3><p class="small muted">${r ? "Responsável: " + esc(r.nome) : "Sem responsável definido"}</p></div><span class="pill plain num">${m.length}</span></header>
+          ${s.descricao ? `<p class="small">${esc(s.descricao)}</p>` : ""}
+          <div class="members">${m.map(c => `<button type="button" class="av" style="--h:${hue(c.id)}" title="${esc(c.nome)} · ${esc(c.cargo)}" data-action="perfil" data-id="${esc(c.id)}">${esc(iniciais(c.nome))}</button>`).join("") || `<span class="small muted">Ninguém neste setor ainda</span>`}</div>
+          ${isAdmin() ? `<div class="actions"><button type="button" class="btn sm" data-action="edit-setor" data-id="${k}">Editar setor</button></div>` : ""}</article>`; }).join("")}</div>
+      <section class="panel"><header><h2>Organograma</h2><span class="small muted">Montado pelo gestor direto de cada pessoa</span></header>
+        ${raizes.length ? `<div style="overflow-x:auto"><ul class="tree">${raizes.map(no).join("")}</ul></div>` : emptyState("Organograma vazio", "Ele se monta sozinho quando os colaboradores têm gestor definido.")}
+      </section>`;
+  },
+
+  feedbacks() {
+    return `<div class="head"><div><h1>Feedbacks</h1><p>Histórico de conversas, reconhecimentos e combinados com cada colaborador.</p></div>
+        <div class="actions"><button type="button" class="btn primary" data-action="new-feedback">Registrar feedback</button></div></div>
+      ${seletorSetor()}
+      <div class="toolbar">
+        <select id="q-fbcolab" data-filter="fbColab" aria-label="Filtrar por colaborador"><option value="">Todos os colaboradores</option>${colabOptions(F.fbColab, false)}</select>
+        <select id="q-fbtipo" data-filter="fbTipo" aria-label="Filtrar por tipo"><option value="">Todos os tipos</option>${TIPOS_FB.map(t => `<option ${F.fbTipo === t ? "selected" : ""}>${t}</option>`).join("")}</select>
+      </div>
+      <div id="lista"></div>`;
+  },
+
+  usuarios() {
+    if (!isAdmin()) return emptyState("Acesso restrito", "Somente administradores gerenciam usuários.");
+    const l = [...S.perfis].sort(byNome);
+    return `<div class="head"><div><h1>Usuários e acessos</h1><p>Crie o login dos gestores e marque quais setores cada um pode visualizar. Gestores registram avaliações e feedbacks, mas não cadastram colaboradores nem testes DISC.</p></div>
+        <div class="actions"><button type="button" class="btn primary" data-action="new-user">Novo usuário</button></div></div>
+      <section class="panel">
+        ${l.length ? `<div class="table-wrap"><table><thead><tr><th>Usuário</th><th>Perfil</th><th>Setores visíveis</th><th>Situação</th><th></th></tr></thead><tbody>
+          ${l.map(u => `<tr><td><div class="person">${avatar(u)}<div><b>${esc(u.nome || "—")}${u.id === me.id ? " (você)" : ""}</b><small>${esc(u.email)}</small></div></div></td>
+            <td>${u.papel === "admin" ? `<span class="pill plain">Administrador</span>` : `<span class="pill plain">Gestor</span>`}</td>
+            <td>${u.papel === "admin" ? `<span class="small muted">Todos</span>` : (u.setores || []).length ? `<div class="actions">${u.setores.map(k => `<span class="tag">${SETORES[k]}</span>`).join("")}</div>` : `<span class="small" style="color:var(--bad)">Nenhum</span>`}</td>
+            <td>${u.ativo ? `<span class="pill ok">Liberado</span>` : `<span class="pill bad">Bloqueado</span>`}</td>
+            <td><button type="button" class="btn sm" data-action="edit-user" data-id="${esc(u.id)}">Editar acesso</button></td></tr>`).join("")}
+          </tbody></table></div>` : emptyState("Nenhum usuário", "Crie o primeiro login de gestor.")}
+      </section>
+      <p class="small muted">Para redefinir a senha de um gestor que esqueceu, use o painel do Supabase (Authentication › Users). Para tirar o acesso de alguém, mude a situação para “Acesso bloqueado”.</p>`;
+  },
+};
+
+const LISTAS = {
+  colaboradores() {
+    const q = F.busca.trim().toLowerCase();
+    const base = pessoas();
+    const l = [...base].sort(byNome).filter(c =>
+      (!q || [c.nome, c.cargo, c.matricula].some(v => (v || "").toLowerCase().includes(q))) && (!F.status || (c.status || "Ativo") === F.status));
+    if (!base.length) return emptyState("Nenhum colaborador neste setor", isAdmin() ? "Cadastre a equipe. Depois aplique o DISC, registre avaliações e feedbacks na ficha de cada pessoa." : "Ainda não há colaboradores cadastrados nos seus setores.", isAdmin() ? `<button type="button" class="btn sm primary" data-action="new-colab">Novo colaborador</button>` : "");
+    if (!l.length) return emptyState("Nenhum resultado", "Ajuste a busca ou os filtros.");
+    return `<div class="table-wrap"><table><thead><tr><th>Colaborador</th><th>Setor</th><th>Gestor</th><th>Admissão</th><th>DISC</th><th>Última nota</th><th>Situação</th></tr></thead><tbody>
+      ${l.map(c => { const av = ultimaAval(c.id); return `<tr class="click" data-action="perfil" data-id="${esc(c.id)}">
+        <td><div class="person">${avatar(c)}<div><b>${esc(c.nome)}</b><small>${esc(c.cargo)}</small></div></div></td>
+        <td><span class="tag">${esc(SETORES[c.setor])}</span></td><td>${esc(colab(c.gestor_id)?.nome || "—")}</td><td class="num">${fmtData(c.admissao)}</td>
+        <td>${discChip(ultimoDisc(c.id))}</td><td>${av ? `<span class="score">${fmtNota(av.media)}</span>` : `<span class="muted">—</span>`}</td><td>${statusPill(c.status)}</td></tr>`; }).join("")}
+      </tbody></table></div><p class="small muted" style="margin-top:10px">${l.length} de ${base.length} colaborador(es)</p>`;
+  },
+  feedbacks() {
+    const base = S.feedbacks.filter(f => noEscopo(f.colaborador_id));
+    const l = base.filter(f => (!F.fbColab || f.colaborador_id === F.fbColab) && (!F.fbTipo || f.tipo === F.fbTipo)).sort(byDataDesc);
+    if (!base.length) return `<section class="panel">${emptyState("Nenhum feedback salvo", "Registre o primeiro feedback para começar o histórico.", `<button type="button" class="btn sm primary" data-action="new-feedback">Registrar feedback</button>`)}</section>`;
+    if (!l.length) return `<section class="panel">${emptyState("Nenhum feedback com esses filtros", "Ajuste o colaborador ou o tipo.")}</section>`;
+    return `<div style="display:flex;flex-direction:column;gap:12px">${l.map(f => feedbackCard(f)).join("")}</div>`;
+  },
+};
+
+function renderLista() {
+  const el = document.getElementById("lista");
+  if (el && LISTAS[view]) el.innerHTML = LISTAS[view]();
+}
+function render() {
+  if (!me) return;
+  const aba = view === "perfil" ? "colaboradores" : view;
+  document.querySelectorAll("#tabs .tab").forEach(t => t.dataset.view === aba ? t.setAttribute("aria-current", "page") : t.removeAttribute("aria-current"));
+  const v = document.getElementById("view");
+  if (!carregado) { v.innerHTML = `<div class="empty"><b>Carregando dados…</b><span>Buscando colaboradores, testes e avaliações.</span></div>`; return; }
+  const ativo = document.activeElement?.id, pos = document.activeElement?.selectionStart;
+  v.innerHTML = VIEWS[view]();
+  renderLista();
+  if (ativo && ativo.startsWith("q-")) { const el = document.getElementById(ativo); if (el) { el.focus(); if (pos != null && el.setSelectionRange) try { el.setSelectionRange(pos, pos); } catch (e) {} } }
+}
+function go(v, id) {
+  view = v; perfilId = id || null;
+  try { history.replaceState(null, "", v === "perfil" ? location.pathname : "#" + v); } catch (e) {}
+  render(); window.scrollTo(0, 0);
+}
+
+/* ---------- ações ---------- */
+function verAvaliacao(a) {
+  openModal({
+    title: `${nomeDe(a.colaborador_id)} · ${a.ciclo}`, submit: meus(a) ? "Editar" : "",
+    body: `<p class="muted small">${fmtData(a.data)}${a.avaliador ? " · avaliado por " + esc(a.avaliador) : ""} · potencial ${esc(a.potencial).toLowerCase()}</p>
+      <div>${COMPETENCIAS.map(([n]) => `<div class="comp-row"><b>${esc(n)}</b><span><span class="score">${a.notas?.[n] ?? "—"}</span> ${dots(a.notas?.[n] || 0)}</span></div>`).join("")}
+      <div class="comp-row"><b>Média</b><span class="score" style="font-size:1.2rem">${fmtNota(a.media)}</span></div></div>
+      ${a.pontos_fortes ? `<div><p class="lbl">Pontos fortes</p><p style="white-space:pre-wrap">${esc(a.pontos_fortes)}</p></div>` : ""}
+      ${a.desenvolver ? `<div><p class="lbl">Pontos a desenvolver</p><p style="white-space:pre-wrap">${esc(a.desenvolver)}</p></div>` : ""}
+      ${a.pdi ? `<div><p class="lbl">PDI e metas</p><p style="white-space:pre-wrap">${esc(a.pdi)}</p></div>` : ""}`,
+    handler: () => { setTimeout(() => formAvaliacao(a), 0); }
+  });
+}
+const ACTIONS = {
+  "go": d => go(d.view),
+  "perfil": d => go("perfil", d.id),
+  "setor": d => { F.setor = d.setor; F.fbColab = ""; render(); },
+  "close-modal": () => closeModal(),
+  "sair": async () => { await sb?.auth.signOut(); tela("telaLogin"); },
+  "minha-senha": () => formMinhaSenha(),
+  "new-colab": () => formColaborador(),
+  "edit-colab": d => formColaborador(colab(d.id)),
+  "del-colab": d => {
+    const c = colab(d.id);
+    const n = ["disc", "avaliacoes", "feedbacks"].reduce((s, t) => s + S[t].filter(x => x.colaborador_id === c.id).length, 0);
+    confirmar("Excluir colaborador", `<p>Excluir <b>${esc(c.nome)}</b>${n ? ` e os ${n} registro(s) ligados a essa pessoa (testes DISC, avaliações e feedbacks)` : ""}? Isso não pode ser desfeito.</p><p class="small muted">Se a pessoa saiu da empresa, você pode só mudar a situação para “Desligado” e manter o histórico.</p>`,
+      "Excluir definitivamente", async () => { if (!await remove("colaboradores", c.id)) return false; toast("Colaborador excluído"); go("colaboradores"); return true; });
+  },
+  "edit-setor": d => formSetor(S.setores.find(s => s.codigo === d.id) || { codigo: d.id }),
+  "disc-teste": d => formDiscTeste(d.id),
+  "disc-externo": d => formDiscExterno(d.id),
+  "del-disc": d => confirmar("Excluir resultado DISC", `<p>Excluir este resultado de teste? Isso não pode ser desfeito.</p>`, "Excluir",
+      async () => { if (!await remove("disc", d.id)) return false; toast("Resultado excluído"); return true; }),
+  "new-aval": d => formAvaliacao({}, d.id),
+  "edit-aval": d => formAvaliacao(S.avaliacoes.find(a => a.id === d.id)),
+  "ver-aval": d => verAvaliacao(S.avaliacoes.find(a => a.id === d.id)),
+  "del-aval": d => confirmar("Excluir avaliação", `<p>Excluir esta avaliação de desempenho? Isso não pode ser desfeito.</p>`, "Excluir",
+      async () => { if (!await remove("avaliacoes", d.id)) return false; toast("Avaliação excluída"); return true; }),
+  "new-feedback": d => formFeedback({}, d.id),
+  "edit-feedback": d => formFeedback(S.feedbacks.find(f => f.id === d.id)),
+  "del-feedback": d => confirmar("Excluir feedback", `<p>Excluir este feedback do histórico? Isso não pode ser desfeito.</p>`, "Excluir",
+      async () => { if (!await remove("feedbacks", d.id)) return false; toast("Feedback excluído"); return true; }),
+  "new-user": () => formUsuario(),
+  "edit-user": d => formUsuario(S.perfis.find(u => u.id === d.id)),
+};
+document.addEventListener("click", e => {
+  const el = e.target.closest("[data-action]");
+  if (!el || !ACTIONS[el.dataset.action]) return;
+  if (el.tagName === "A") e.preventDefault();
+  ACTIONS[el.dataset.action](el.dataset, el);
+});
+document.addEventListener("keydown", e => {
+  if ((e.key === "Enter" || e.key === " ") && e.target.matches(".node[data-action]")) { e.preventDefault(); e.target.click(); }
+});
+document.addEventListener("input", e => {
+  const k = e.target.dataset?.filter; if (!k) return;
+  F[k] = e.target.value;
+  if (LISTAS[view]) renderLista(); else render();
+});
+
+iniciar();
+</script>
+</body>
+</html>
