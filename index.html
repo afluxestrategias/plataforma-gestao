@@ -3,14 +3,17 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Gente &amp; Gestão</title>
+<title>AFLUX · Gente &amp; Gestão</title>
+<link rel="icon" href="logo.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700&family=Nunito+Sans:opsz,wght@6..12,400;6..12,600;6..12,700&display=swap">
 <style>
 :root {
   color-scheme: light;
-  --bg: #F2F5F4; --surface: #FFFFFF; --surface-2: #E8EEEC; --ink: #14201F; --muted: #5A6866; --line: #D5DEDB;
-  --accent: #0E6B63; --accent-ink: #FFFFFF; --accent-soft: #DCEFEC;
+  /* cores da marca AFLUX: azul-marinho #27306A, rosa #C44E60, lilás #A486A2 */
+  --bg: #F4F4F9; --surface: #FFFFFF; --surface-2: #ECEDF4; --ink: #1B1F45; --muted: #5E6185; --line: #DCDDEA;
+  --accent: #27306A; --accent-ink: #FFFFFF; --accent-soft: #E7E8F3;
+  --brand-grad: linear-gradient(90deg, #C44E60, #A486A2);
   --d: #D04545; --i: #D99A0B; --s: #3A9657; --c: #2E6CB5;
   --good: #2E8B57; --warn: #B7791F; --bad: #C0392B; --av-l: 42%;
   --display: "Sora", "Segoe UI", system-ui, sans-serif;
@@ -18,8 +21,8 @@
   --r: 10px;
 }
 @media (prefers-color-scheme: dark) { :root {
-  --bg: #0E1514; --surface: #162120; --surface-2: #1E2B29; --ink: #E5EEEC; --muted: #98A8A5; --line: #2A3836;
-  --accent: #4FC1B4; --accent-ink: #062421; --accent-soft: #173936;
+  --bg: #10122A; --surface: #181B3A; --surface-2: #222547; --ink: #E9EAF5; --muted: #A2A5C6; --line: #2E3260;
+  --accent: #A9B1F0; --accent-ink: #141838; --accent-soft: #2A2F63;
   --d: #F07070; --i: #F2C04A; --s: #6CC489; --c: #6FA6EC;
   --good: #5CC98A; --warn: #E8B04F; --bad: #F07A6E; --av-l: 36%; color-scheme: dark } }
 
@@ -46,12 +49,12 @@ button, input, select, textarea { font: inherit; color: inherit }
 
 .app { display: grid; grid-template-columns: 236px minmax(0, 1fr); min-height: 100vh }
 .side { background: var(--surface); border-right: 1px solid var(--line); padding: 22px 14px; position: sticky; top: 0; height: 100vh; display: flex; flex-direction: column; gap: 22px }
-.brand { display: flex; align-items: center; gap: 10px; padding: 0 8px }
-.brand-mark { width: 34px; height: 34px; border-radius: 9px; display: grid; grid-template-columns: 1fr 1fr; overflow: hidden; flex: none }
-.brand-mark span:nth-child(1) { background: var(--d) } .brand-mark span:nth-child(2) { background: var(--i) }
-.brand-mark span:nth-child(3) { background: var(--c) } .brand-mark span:nth-child(4) { background: var(--s) }
-.brand b { font-family: var(--display); font-size: 1.02rem; line-height: 1.15; display: block }
-.brand small { color: var(--muted); font-size: 0.75rem }
+.brand { display: flex; flex-direction: column; gap: 8px; padding: 0 8px }
+/* o logo é azul-marinho sobre transparente: no tema escuro ganha um fundo claro para continuar legível */
+.brand-logo { display: block; width: 150px; max-width: 100%; height: auto; border-radius: 8px }
+.brand small { color: var(--muted); font-size: 0.75rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase }
+.grad-bar { height: 4px; border-radius: 99px; background: var(--brand-grad) }
+@media (prefers-color-scheme: dark) { .brand-logo { background: #FFFFFF; padding: 6px 8px } }
 nav.tabs { display: flex; flex-direction: column; gap: 2px }
 .tab { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 8px; border: 0; background: none; cursor: pointer; text-align: left; color: var(--muted); font-weight: 600 }
 .tab svg { width: 18px; height: 18px; flex: none; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round }
@@ -59,6 +62,7 @@ nav.tabs { display: flex; flex-direction: column; gap: 2px }
 .tab[aria-current="page"] { background: var(--accent-soft); color: var(--accent) }
 .side-foot { margin-top: auto; padding: 12px 8px 0; border-top: 1px solid var(--line); display: flex; flex-direction: column; gap: 6px; font-size: 0.85rem }
 .side-foot b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+.side-foot .who { display: flex; flex-direction: column; min-width: 0 }
 
 main { padding: 28px 16px 64px; min-width: 0 }
 .wrap { max-width: 1180px; margin: 0 auto; display: flex; flex-direction: column; gap: 22px }
@@ -222,7 +226,7 @@ dialog form { display: flex; flex-direction: column; max-height: calc(100vh - 40
 @media (max-width: 860px) {
   .app { grid-template-columns: minmax(0, 1fr) }
   .side { height: auto; flex-direction: row; flex-wrap: wrap; align-items: center; padding: 10px 16px; border-right: 0; border-bottom: 1px solid var(--line); z-index: 5; gap: 10px }
-  .brand > div { display: none } .brand { padding: 0 }
+  .brand { padding: 0 } .brand small, .brand .grad-bar { display: none } .brand-logo { width: 90px }
   nav.tabs { flex-direction: row; overflow-x: auto; min-width: 0; flex: 1 }
   .tab { padding: 8px 10px; white-space: nowrap } .tab svg { display: none }
   .side-foot { margin-top: 0; border-top: 0; padding: 0; flex-direction: row; align-items: center; width: 100% }
@@ -241,9 +245,10 @@ dialog form { display: flex; flex-direction: column; max-height: calc(100vh - 40
 <div class="login" id="telaLogin" hidden>
   <form class="login-box" id="formLogin" novalidate>
     <div class="brand">
-      <div class="brand-mark" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
-      <div><b>Gente &amp; Gestão</b><small>Plataforma de RH</small></div>
+      <img class="brand-logo" src="logo.png" alt="AFLUX Estratégia Financeira Contábil" style="width:200px">
+      <small>Gente &amp; Gestão · Plataforma de RH</small>
     </div>
+    <div class="grad-bar"></div>
     <h1>Entrar</h1>
     <div class="field"><label for="l-email">E-mail</label><input type="email" id="l-email" autocomplete="username" required></div>
     <div class="field"><label for="l-senha">Senha</label><input type="password" id="l-senha" autocomplete="current-password" required></div>
@@ -260,8 +265,9 @@ dialog form { display: flex; flex-direction: column; max-height: calc(100vh - 40
 <div class="app" id="telaApp" hidden>
   <aside class="side">
     <div class="brand">
-      <div class="brand-mark" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
-      <div><b>Gente &amp; Gestão</b><small>Plataforma de RH</small></div>
+      <img class="brand-logo" src="logo.png" alt="AFLUX Estratégia Financeira Contábil">
+      <small>Gente &amp; Gestão</small>
+      <div class="grad-bar"></div>
     </div>
     <nav class="tabs" id="tabs" aria-label="Seções">
       <button class="tab" data-action="go" data-view="painel"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>Painel</button>
