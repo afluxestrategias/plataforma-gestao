@@ -272,6 +272,31 @@ dialog form { display: flex; flex-direction: column; max-height: calc(100vh - 40
 .rel-pn-neg { margin-right: auto; border-radius: 0 17px 17px 0; opacity: .5; min-width: 3px }
 .rel-rodape { border-top: 1px solid var(--line); padding-top: 12px; font-size: .8rem }
 @media (max-width: 560px) { .relatorio { padding: 18px } .rel-capa { flex-direction: column; align-items: flex-start } .rel-grade { grid-template-columns: minmax(0, 1fr) } .rel-fatores { grid-template-columns: repeat(2, minmax(0, 1fr)) } }
+/* ficha da avaliação para assinatura */
+.ficha { background: #fff; color: #1B1F45; border: 1px solid var(--line); border-radius: var(--r); padding: 28px 32px; max-width: 860px; display: flex; flex-direction: column; gap: 14px; font-size: .88rem }
+.fa-topo { display: flex; justify-content: flex-end } .fa-topo .rel-logo { background: none; padding: 0 }
+.fa-titulo { background: #27306A; color: #fff; text-align: center; font-size: 1.15rem; padding: 10px; border-radius: 4px; text-transform: uppercase; letter-spacing: .03em }
+.fa-dados { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 24px }
+.fa-dados div { display: flex; gap: 6px; border-bottom: 1px solid #9aa0c0; padding-bottom: 3px } .fa-dados span { color: #5E6185; white-space: nowrap } .fa-dados span::after { content: ":" }
+.fa-tab { width: 100%; border-collapse: collapse; font-size: .82rem }
+.fa-tab th { background: #27306A; color: #fff; padding: 6px 8px; text-align: left; font-weight: 700 } .fa-tab th:not(:first-child) { width: 32px; text-align: center }
+.fa-tab td { border: 1px solid #c9cce0; padding: 5px 8px; vertical-align: middle } .fa-tab tbody tr:nth-child(even) td { background: #F1F2F8 }
+.fa-x { text-align: center; font-weight: 800; color: #27306A; font-size: .95rem }
+.fa-legenda { font-size: .75rem; color: #5E6185; border: 1px solid #c9cce0; padding: 6px 8px; border-radius: 4px }
+.fa-resultado { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px }
+.fa-resultado div { border: 1px solid #c9cce0; border-radius: 4px; padding: 8px; display: flex; flex-direction: column; align-items: center; text-align: center }
+.fa-resultado span { font-size: .72rem; color: #5E6185 } .fa-resultado b { font-size: 1rem; color: #27306A }
+.fa-texto p { white-space: pre-wrap; margin-top: 2px }
+.fa-linhas i { display: block; border-bottom: 1px solid #9aa0c0; height: 22px }
+.fa-data { text-align: center; margin-top: 8px }
+.fa-assinaturas { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 40px; margin-top: 36px; text-align: center }
+.fa-assinaturas i { display: block; border-bottom: 1px solid #1B1F45; height: 30px; margin-bottom: 4px }
+.fa-assinaturas small { display: block; color: #5E6185 }
+@media (max-width: 560px) { .ficha { padding: 16px } .fa-dados, .fa-resultado { grid-template-columns: minmax(0, 1fr) } }
+@media print {
+  .ficha { border: 0; padding: 0; max-width: none; font-size: 10.5pt } .fa-tab tr, .fa-assinaturas { break-inside: avoid }
+  @page { margin: 14mm }
+}
 @media print {
   body { background: #fff } .side, .no-print, #toast { display: none !important } .app { display: block }
   main .wrap { padding: 0; max-width: none } .relatorio { border: 0; padding: 0; max-width: none }
@@ -517,7 +542,7 @@ async function entrar(user) {
   document.getElementById("tabUsuarios").hidden = !isAdmin();
   document.getElementById("tabCargos").hidden = !isAdmin();
   const inicial = (location.hash || "").slice(1);
-  view = VIEWS[inicial] && inicial !== "perfil" && inicial !== "relatorio" && (!["usuarios", "cargos"].includes(inicial) || isAdmin()) ? inicial : "painel";
+  view = VIEWS[inicial] && !["perfil", "relatorio", "ficha"].includes(inicial) && (!["usuarios", "cargos"].includes(inicial) || isAdmin()) ? inicial : "painel";
   F.setor = setoresVisiveis().length === 1 ? setoresVisiveis()[0] : "";
   tela("telaApp"); render();
   carregar();
@@ -1086,13 +1111,55 @@ const VIEWS = {
         <section class="panel"><header><h2>Avaliações de desempenho</h2><button type="button" class="btn sm" data-action="new-aval" data-id="${esc(c.id)}">Nova avaliação</button></header>
           ${avs.length ? `<div class="list">${avs.map(v => `<div class="list-item"><div class="grow"><b>${esc(v.ciclo)}</b><p class="small muted">${fmtData(v.data)}${v.avaliador ? " · " + esc(v.avaliador) : ""}</p>
               ${v.pdi ? `<p class="small" style="margin-top:4px;white-space:pre-wrap"><b>PDI:</b> ${esc(v.pdi)}</p>` : ""}</div>
-              <div style="text-align:right"><span class="small muted">Nota final</span><br><span class="score">${fmtNota(notaFinal(v).nota)}</span><br><span class="pill ${CONCEITO_CLS[notaFinal(v).conceito]}">${CONCEITOS[notaFinal(v).conceito]}</span><br><button type="button" class="btn link sm" data-action="ver-aval" data-id="${esc(v.id)}">Ver</button></div></div>`).join("")}</div>`
+              <div style="text-align:right"><span class="small muted">Nota final</span><br><span class="score">${fmtNota(notaFinal(v).nota)}</span><br><span class="pill ${CONCEITO_CLS[notaFinal(v).conceito]}">${CONCEITOS[notaFinal(v).conceito]}</span><br><button type="button" class="btn link sm" data-action="ver-aval" data-id="${esc(v.id)}">Ver</button> <button type="button" class="btn link sm" data-action="ficha" data-id="${esc(v.id)}">PDF</button></div></div>`).join("")}</div>`
           : emptyState("Sem avaliações", "Registre a primeira avaliação para acompanhar a evolução.")}
         </section>
       </div>
       <section class="panel"><header><h2>Feedbacks</h2><button type="button" class="btn sm primary" data-action="new-feedback" data-id="${esc(c.id)}">Registrar feedback</button></header>
         ${fbs.length ? `<div style="display:flex;flex-direction:column;gap:12px">${fbs.map(f => feedbackCard(f, false)).join("")}</div>` : emptyState("Nenhum feedback salvo", "Registre conversas, reconhecimentos e combinados para manter o histórico.")}
       </section>`;
+  },
+
+  // Ficha da avaliação de desempenho para imprimir e colher as assinaturas
+  ficha() {
+    const a = S.avaliacoes.find(x => x.id === perfilId), c = a && colab(a.colaborador_id);
+    if (!a) return emptyState("Avaliação não encontrada", "Volte para a aba Desempenho e abra a avaliação de novo.");
+    const f = notaFinal(a), niveis = Object.keys(CONCEITOS);
+    const tabela = (titulo, itens, valorDe) => `<table class="fa-tab"><thead><tr><th>${titulo}</th>${niveis.map(k => `<th title="${CONCEITOS[k]}">${k}</th>`).join("")}</tr></thead><tbody>
+      ${itens.map(([n, d]) => { const v = valorDe(n); return `<tr><td><b>${esc(n)}</b>${d ? `: ${esc(d)}` : ""}</td>${niveis.map(k => `<td class="fa-x">${v == k ? "X" : ""}</td>`).join("")}</tr>`; }).join("")}
+      </tbody></table>`;
+    const texto = (rotulo, t) => t ? `<div class="fa-texto"><b>${rotulo}</b><p>${esc(t)}</p></div>` : "";
+    const temComport = !!a.notas?.comportamental;
+    return `<div class="head no-print"><div><button type="button" class="btn link" data-action="go" data-view="desempenho">← Desempenho</button></div>
+        <div class="actions"><button type="button" class="btn primary" data-action="imprimir">Imprimir / salvar PDF</button></div></div>
+      <article class="ficha">
+        <header class="fa-topo"><img src="logo.png" alt="AFLUX Estratégia Financeira Contábil" class="rel-logo"></header>
+        <h1 class="fa-titulo">Avaliação de Desempenho</h1>
+        <div class="fa-dados">
+          <div><span>Colaborador(a)</span><b>${esc(c?.nome || "—")}</b></div>
+          <div><span>Admissão</span><b>${fmtData(c?.admissao)}</b></div>
+          <div><span>Cargo</span><b>${esc(c?.cargo || "—")}</b></div>
+          <div><span>Setor</span><b>${esc(SETORES[c?.setor] || "—")}</b></div>
+          <div><span>Avaliador(a)</span><b>${esc(a.avaliador || "—")}</b></div>
+          <div><span>Ciclo · data</span><b>${esc(a.ciclo)} · ${fmtData(a.data)}</b></div>
+        </div>
+        ${tabela("Análise de Competências", COMPETENCIAS, n => a.notas?.[n])}
+        ${temComport ? tabela("Análise de Desempenho Comportamental", COMPORTAMENTAIS, n => notaComport(a.notas.comportamental[n])) : ""}
+        <p class="fa-legenda">${niveis.map(k => `<b>${k}</b> ${CONCEITOS[k]}`).join(" · ")}</p>
+        <div class="fa-resultado">
+          <div><span>Média das competências</span><b>${fmtNota(f.comp)}</b></div>
+          ${f.comport != null ? `<div><span>Média comportamental</span><b>${fmtNota(f.comport)}</b></div>` : ""}
+          <div><span>Nota final (0 a 10)</span><b>${fmtNota(f.nota)}</b></div>
+          <div><span>Conceito final</span><b>${f.conceito} – ${CONCEITOS[f.conceito]}</b></div>
+        </div>
+        ${texto("Pontos fortes", a.pontos_fortes)}${texto("Pontos a desenvolver", a.desenvolver)}${texto("Plano de desenvolvimento (PDI) e metas", a.pdi)}
+        <div class="fa-texto"><b>Observações</b><div class="fa-linhas"><i></i><i></i><i></i></div></div>
+        <p class="fa-data">Data: ____/____/________</p>
+        <div class="fa-assinaturas">
+          <div><i></i><span>Assinatura do(a) colaborador(a)</span><small>${esc(c?.nome || "")}</small></div>
+          <div><i></i><span>Assinatura do(a) avaliador(a)</span><small>${esc(a.avaliador || "")}</small></div>
+        </div>
+      </article>`;
   },
 
   relatorio() {
@@ -1166,7 +1233,7 @@ const VIEWS = {
         ${lista.length ? `<div class="table-wrap"><table><thead><tr><th>Colaborador</th><th>Ciclo</th><th>Avaliador</th><th>Data</th><th>Média</th><th>Nota final</th><th></th></tr></thead><tbody>
           ${lista.map(a => { const c = colab(a.colaborador_id); return `<tr><td><div class="person">${avatar(c)}<div><b>${esc(nomeDe(a.colaborador_id))}</b><small>${esc(c?.cargo)}</small></div></div></td><td>${esc(a.ciclo)}</td><td>${esc(a.avaliador || "—")}</td><td class="num">${fmtData(a.data)}</td>
             <td><span class="score">${fmtNota(a.media)}</span> ${dots(a.media)}</td><td style="white-space:nowrap">${notaFinalChip(a)}</td>
-            <td style="white-space:nowrap"><button type="button" class="btn link sm" data-action="ver-aval" data-id="${esc(a.id)}">Ver</button>${meus(a) ? `<button type="button" class="btn link sm" data-action="edit-aval" data-id="${esc(a.id)}">Editar</button><button type="button" class="btn link sm danger" data-action="del-aval" data-id="${esc(a.id)}">Excluir</button>` : ""}</td></tr>`; }).join("")}
+            <td style="white-space:nowrap"><button type="button" class="btn link sm" data-action="ver-aval" data-id="${esc(a.id)}">Ver</button><button type="button" class="btn link sm" data-action="ficha" data-id="${esc(a.id)}">PDF</button>${meus(a) ? `<button type="button" class="btn link sm" data-action="edit-aval" data-id="${esc(a.id)}">Editar</button><button type="button" class="btn link sm danger" data-action="del-aval" data-id="${esc(a.id)}">Excluir</button>` : ""}</td></tr>`; }).join("")}
           </tbody></table></div>` : emptyState("Nenhuma avaliação registrada", "Avalie as competências de 1 a 5, a análise comportamental e registre o PDI.", `<button type="button" class="btn sm primary" data-action="new-aval">Nova avaliação</button>`)}
       </section>`;
   },
@@ -1290,7 +1357,7 @@ function renderLista() {
 }
 function render() {
   if (!me) return;
-  const aba = view === "perfil" ? "colaboradores" : view === "relatorio" ? "disc" : view;
+  const aba = view === "perfil" ? "colaboradores" : view === "relatorio" ? "disc" : view === "ficha" ? "desempenho" : view;
   document.querySelectorAll("#tabs .tab").forEach(t => t.dataset.view === aba ? t.setAttribute("aria-current", "page") : t.removeAttribute("aria-current"));
   const v = document.getElementById("view");
   if (!carregado) { v.innerHTML = `<div class="empty"><b>Carregando dados…</b><span>Buscando colaboradores, testes e avaliações.</span></div>`; return; }
@@ -1301,7 +1368,7 @@ function render() {
 }
 function go(v, id) {
   view = v; perfilId = id || null;
-  try { history.replaceState(null, "", v === "perfil" || v === "relatorio" ? location.pathname : "#" + v); } catch (e) {}
+  try { history.replaceState(null, "", ["perfil", "relatorio", "ficha"].includes(v) ? location.pathname : "#" + v); } catch (e) {}
   render(); window.scrollTo(0, 0);
 }
 
@@ -1320,6 +1387,7 @@ function verAvaliacao(a) {
   openModal({
     title: `${nomeDe(a.colaborador_id)} · ${a.ciclo}`, submit: meus(a) ? "Editar" : "",
     body: `<p class="muted small">${fmtData(a.data)}${a.avaliador ? " · avaliado por " + esc(a.avaliador) : ""}</p>
+      <div><button type="button" class="btn sm primary" data-action="ficha" data-id="${esc(a.id)}">Gerar PDF para assinatura</button></div>
       ${(() => { const f = notaFinal(a); return `<div class="kpi" style="text-align:center"><span>Nota final</span><b>${fmtNota(f.nota)}</b>
         <span><span class="pill ${CONCEITO_CLS[f.conceito]}">${CONCEITOS[f.conceito]}</span></span>
         <span class="small muted">Média das competências ${fmtNota(f.comp)}${f.comport != null ? " · média comportamental " + fmtNota(f.comport) : ""} (de 1 a 5)</span></div>`; })()}
@@ -1380,6 +1448,7 @@ const ACTIONS = {
   "edit-aval": d => formAvaliacao(S.avaliacoes.find(a => a.id === d.id)),
   "ver-aval": d => verAvaliacao(S.avaliacoes.find(a => a.id === d.id)),
   "relatorio": d => go("relatorio", d.id),
+  "ficha": d => { closeModal(); go("ficha", d.id); },
   "imprimir": () => window.print(),
   "del-aval": d => confirmar("Excluir avaliação", `<p>Excluir esta avaliação de desempenho? Isso não pode ser desfeito.</p>`, "Excluir",
       async () => { if (!await remove("avaliacoes", d.id)) return false; toast("Avaliação excluída"); return true; }),
