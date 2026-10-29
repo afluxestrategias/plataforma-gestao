@@ -272,6 +272,24 @@ dialog form { display: flex; flex-direction: column; max-height: calc(100vh - 40
 .rel-pn-neg { margin-right: auto; border-radius: 0 17px 17px 0; opacity: .5; min-width: 3px }
 .rel-rodape { border-top: 1px solid var(--line); padding-top: 12px; font-size: .8rem }
 @media (max-width: 560px) { .relatorio { padding: 18px } .rel-capa { flex-direction: column; align-items: flex-start } .rel-grade { grid-template-columns: minmax(0, 1fr) } .rel-fatores { grid-template-columns: repeat(2, minmax(0, 1fr)) } }
+/* evidências do período */
+.fb-cols { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 16px; align-items: start }
+.fb-form { display: grid; grid-template-columns: minmax(0, 1fr) 290px; gap: 18px; align-items: start }
+.fb-ev { background: color-mix(in srgb, var(--warn) 10%, var(--surface)); border: 1px solid color-mix(in srgb, var(--warn) 35%, var(--line)); border-radius: var(--r); padding: 14px; display: flex; flex-direction: column; gap: 10px; position: sticky; top: 12px }
+.ev-painel { display: flex; flex-direction: column; gap: 10px }
+.ev-cab { display: flex; justify-content: space-between; align-items: center; gap: 8px } .ev-cab h3 { font-size: 1rem }
+.ev-periodo { display: flex; flex-direction: column; gap: 6px } .ev-periodo label { display: grid; grid-template-columns: 34px minmax(0, 1fr); align-items: center; font-size: .82rem; color: var(--muted) }
+.ev-lista { display: flex; flex-direction: column; gap: 8px; max-height: 520px; overflow-y: auto }
+.ev-card { background: var(--surface); border: 1px solid var(--line); border-left: 4px solid var(--good); border-radius: 8px; padding: 10px 12px; display: flex; flex-direction: column; gap: 4px; align-items: flex-start }
+.ev-card.ev-neg { border-left-color: var(--bad) } .ev-card h4 { font-size: .9rem; margin: 0; font-family: var(--display) }
+.ev-topo { display: flex; justify-content: space-between; width: 100% }
+.ev-tipo { font-size: .75rem; font-weight: 700; color: var(--good) } .ev-neg .ev-tipo { color: var(--bad) }
+.ev-escolha { display: flex; gap: 8px } .ev-escolha input { position: absolute; opacity: 0; pointer-events: none }
+.ev-escolha span { display: inline-block; padding: 7px 16px; border-radius: 20px; border: 1px solid var(--line); cursor: pointer; font-weight: 700; font-size: .88rem }
+.ev-escolha input:checked + .ev-pos { background: var(--good); border-color: var(--good); color: #fff }
+.ev-escolha input:checked + .ev-neg { background: var(--bad); border-color: var(--bad); color: #fff }
+.ev-escolha input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: 2px }
+@media (max-width: 860px) { .fb-cols, .fb-form { grid-template-columns: minmax(0, 1fr) } .fb-ev { position: static } }
 /* ficha da avaliação para assinatura */
 .ficha { background: #fff; color: #1B1F45; border: 1px solid var(--line); border-radius: var(--r); padding: 28px 32px; max-width: 860px; display: flex; flex-direction: column; gap: 14px; font-size: .88rem }
 .fa-topo { display: flex; justify-content: flex-end } .fa-topo .rel-logo { background: none; padding: 0 }
@@ -370,11 +388,11 @@ dialog form { display: flex; flex-direction: column; max-height: calc(100vh - 40
 <script src="relatorio-disc.js?v=2"></script>
 <script>
 const SETORES = { CONTABIL: "Contábil", FISCAL: "Fiscal", DP: "Departamento Pessoal", ATENDIMENTO: "Atendimento" };
-const TABELAS = ["setores", "gestores", "colaboradores", "disc", "avaliacoes", "feedbacks"];
-const S = { setores: [], gestores: [], colaboradores: [], disc: [], avaliacoes: [], feedbacks: [], perfis: [], disc_convites: [], disc_adjetivos: [], cargos_plano: [], remuneracao: [] };
+const TABELAS = ["setores", "gestores", "colaboradores", "disc", "avaliacoes", "feedbacks", "evidencias"];
+const S = { setores: [], gestores: [], colaboradores: [], disc: [], avaliacoes: [], feedbacks: [], evidencias: [], perfis: [], disc_convites: [], disc_adjetivos: [], cargos_plano: [], remuneracao: [] };
 let sb = null, me = null, carregado = false;
 let view = "painel", perfilId = null;
-const F = { setor: "", busca: "", status: "", fbColab: "", fbTipo: "", ciclo: "" };
+const F = { setor: "", busca: "", status: "", fbColab: "", fbTipo: "", ciclo: "", evDe: new Date(Date.now() - 90 * 864e5).toISOString().slice(0, 10), evAte: "" };
 
 const FACTORS = {
   D: { nome: "Dominância", resumo: "Direto, decidido e orientado a resultados. Gosta de desafios, autonomia e de ver as coisas acontecerem.",
@@ -565,7 +583,10 @@ document.getElementById("formLogin").addEventListener("submit", async e => {
 /* ---------- modal ---------- */
 const modal = document.getElementById("modal"), mForm = document.getElementById("modalForm");
 let onSubmit = null;
-function openModal({ title, body, submit = "Salvar", danger = false, handler, wide = false, cancelar = "Cancelar" }) {
+// aoCancelar: o que fazer no Cancelar (ex.: voltar ao formulário anterior sem perder o que foi digitado)
+let aoCancelarModal = null;
+function openModal({ title, body, submit = "Salvar", danger = false, handler, wide = false, cancelar = "Cancelar", aoCancelar = null }) {
+  aoCancelarModal = aoCancelar;
   document.getElementById("mTitle").textContent = title;
   document.getElementById("mBody").innerHTML = body;
   document.getElementById("mFoot").innerHTML = `<button type="button" class="btn" data-action="close-modal">${esc(cancelar)}</button>${submit ? `<button type="submit" class="btn ${danger ? "danger solid" : "primary"}">${esc(submit)}</button>` : ""}`;
@@ -574,7 +595,7 @@ function openModal({ title, body, submit = "Salvar", danger = false, handler, wi
   if (!modal.open) modal.showModal();
   mForm.querySelector("input:not([type=hidden]):not([readonly]), select, textarea")?.focus();
 }
-function closeModal() { modal.close(); onSubmit = null; }
+function closeModal() { modal.close(); onSubmit = null; aoCancelarModal = null; }
 mForm.addEventListener("submit", async e => {
   e.preventDefault();
   if (!onSubmit) return;
@@ -796,11 +817,79 @@ function formAvaliacao(a = {}, cid) {
   });
 }
 
+/* ---------- evidências do período ---------- */
+const diasAtras = n => new Date(Date.now() - n * 864e5).toISOString().slice(0, 10);
+const CRITERIOS_EV = [["Análise de Competências", COMPETENCIAS.map(([n]) => n)], ["Análise de Desempenho Comportamental", COMPORTAMENTAIS.map(([n]) => n)]];
+const evidenciasDe = (cid, de, ate) => S.evidencias.filter(e => (!cid || e.colaborador_id === cid) && noEscopo(e.colaborador_id)
+  && (!de || e.data >= de) && (!ate || e.data <= ate)).sort(byDataDesc);
+
+function evidenciaCard(e, { comNome = false, acoes = false } = {}) {
+  const pos = e.tipo === "positiva";
+  return `<article class="ev-card ${pos ? "ev-pos" : "ev-neg"}">
+    <div class="ev-topo"><span class="ev-tipo">${pos ? "Positiva" : "Negativa"}</span><span class="small muted num">${fmtData(e.data)}</span></div>
+    ${comNome ? `<p class="small"><b>${esc(nomeDe(e.colaborador_id))}</b></p>` : ""}
+    <span class="tag">${esc(e.criterio)}</span>
+    <h4>${esc(e.titulo)}</h4>
+    ${e.descricao ? `<p class="small">${esc(e.descricao)}</p>` : ""}
+    ${e.cliente ? `<p class="small muted">Cliente: ${esc(e.cliente)}</p>` : ""}
+    ${acoes && meus(e) ? `<div class="actions"><button type="button" class="btn link sm" data-action="edit-evid" data-id="${esc(e.id)}">Editar</button><button type="button" class="btn link sm danger" data-action="del-evid" data-id="${esc(e.id)}">Excluir</button></div>` : ""}
+  </article>`;
+}
+// Quadro "Evidências do período" (aba Feedbacks e formulário de feedback)
+function painelEvidencias(lista, { botao = "", comNome = false, acoes = false, periodo = "" } = {}) {
+  const pos = lista.filter(e => e.tipo === "positiva").length;
+  return `<div class="ev-painel"><div class="ev-cab"><h3>Evidências do período</h3><span class="pill plain num">${lista.length}</span></div>
+    ${periodo}
+    <div class="ev-cab"><span class="actions"><span class="pill ok">${pos} positiva(s)</span><span class="pill bad">${lista.length - pos} negativa(s)</span></span>${botao}</div>
+    <div class="ev-lista">${lista.map(e => evidenciaCard(e, { comNome, acoes })).join("") || `<p class="small muted">Nenhuma evidência neste período.</p>`}</div></div>`;
+}
+
+function formEvidencia(ev = {}, cid, voltar) {
+  if (!pessoas().length) return toast("Não há colaboradores no seu escopo.", true);
+  const tipo = ev.tipo || "positiva";
+  openModal({
+    title: ev.id ? "Editar evidência" : "Nova evidência",
+    cancelar: voltar ? "Voltar ao feedback" : "Cancelar", aoCancelar: voltar || null,
+    body: `<div class="form-grid">
+      <div class="field full"><label class="req" for="e-colab">Colaborador</label><select id="e-colab" name="colaborador_id">${colabOptions(ev.colaborador_id || cid)}</select></div>
+      <div class="field full"><label>Tipo de evidência</label><div class="ev-escolha">
+        <label><input type="radio" name="tipo" value="positiva" ${tipo === "positiva" ? "checked" : ""}><span class="ev-pos">Positiva</span></label>
+        <label><input type="radio" name="tipo" value="negativa" ${tipo === "negativa" ? "checked" : ""}><span class="ev-neg">Negativa</span></label></div></div>
+      <div class="field"><label for="e-data">Data da ocorrência</label><input type="date" id="e-data" name="data" value="${esc(ev.data || hoje())}"></div>
+      <div class="field"><label for="e-cliente">Cliente vinculado <span class="muted">(opcional)</span></label><input type="text" id="e-cliente" name="cliente" value="${esc(ev.cliente)}"></div>
+      <div class="field full"><label class="req" for="e-crit">Critério da avaliação de desempenho</label><select id="e-crit" name="criterio"><option value="">Selecione o critério vinculado</option>
+        ${CRITERIOS_EV.map(([g, l]) => `<optgroup label="${esc(g)}">${l.map(n => `<option ${n === ev.criterio ? "selected" : ""}>${esc(n)}</option>`).join("")}</optgroup>`).join("")}</select></div>
+      <div class="field full"><label class="req" for="e-titulo">Título (resumo)</label><input type="text" id="e-titulo" name="titulo" value="${esc(ev.titulo)}" placeholder="Ex.: Excelente resolução de problema com cliente"></div>
+      <div class="field full"><label for="e-desc">Descrição detalhada</label><textarea id="e-desc" name="descricao" placeholder="Descreva a situação observada com detalhes…">${esc(ev.descricao)}</textarea></div>
+    </div>`,
+    submit: "Registrar evidência",
+    handler: async fd => {
+      const o = Object.fromEntries(fd);
+      o.titulo = (o.titulo || "").trim();
+      if (!o.colaborador_id || !o.criterio || !o.titulo) return formErro("Preencha colaborador, critério e título.");
+      if (!await save("evidencias", ev.id, o)) return false;
+      toast(ev.id ? "Evidência atualizada" : "Evidência registrada");
+      if (voltar) { voltar(); return false; }
+    }
+  });
+}
+
+// Atualiza o quadro de evidências dentro do formulário de feedback (colaborador e período escolhidos)
+function evidenciasNoFeedback() {
+  const el = document.getElementById("ev-feedback");
+  if (!el) return;
+  const cid = document.getElementById("b-colab")?.value, de = document.getElementById("ev-de")?.value, ate = document.getElementById("ev-ate")?.value;
+  el.innerHTML = cid ? painelEvidencias(evidenciasDe(cid, de, ate), { botao: `<button type="button" class="btn link sm" data-action="evid-do-feedback">+ Nova</button>` })
+    : `<p class="small muted">Escolha o colaborador para ver as evidências do período.</p>`;
+}
+document.addEventListener("change", e => { if (e.target.matches("#b-colab, #ev-de, #ev-ate")) evidenciasNoFeedback(); });
+
 function formFeedback(f = {}, cid) {
   if (!pessoas().length) return toast("Não há colaboradores no seu escopo.", true);
+  formFeedback.atual = f;
   openModal({
-    title: f.id ? "Editar feedback" : "Registrar feedback",
-    body: `<div class="form-grid">
+    title: f.id ? "Editar feedback" : "Registrar feedback", wide: true,
+    body: `<div class="fb-form"><div class="form-grid">
       <div class="field"><label class="req" for="b-colab">Colaborador</label><select id="b-colab" name="colaborador_id">${colabOptions(f.colaborador_id || cid)}</select></div>
       <div class="field"><label for="b-tipo">Tipo</label><select id="b-tipo" name="tipo">${TIPOS_FB.map(t => `<option ${t === f.tipo ? "selected" : ""}>${t}</option>`).join("")}</select></div>
       <div class="field"><label for="b-data">Data</label><input type="date" id="b-data" name="data" value="${esc(f.data || hoje())}"></div>
@@ -809,15 +898,21 @@ function formFeedback(f = {}, cid) {
       <div class="field full"><label class="req" for="b-texto">O que foi conversado</label><textarea id="b-texto" name="texto" style="min-height:120px">${esc(f.texto)}</textarea></div>
       <div class="field full"><label for="b-plano">Combinados e plano de ação</label><textarea id="b-plano" name="plano_acao">${esc(f.plano_acao)}</textarea></div>
       <div class="field"><label for="b-prox">Próximo acompanhamento</label><input type="date" id="b-prox" name="proximo" value="${esc(f.proximo)}"></div>
-    </div>`,
+    </div>
+    <aside class="fb-ev">
+      <div class="ev-periodo"><label>De <input type="date" id="ev-de" name="_de" value="${esc(f._de || diasAtras(90))}"></label><label>Até <input type="date" id="ev-ate" name="_ate" value="${esc(f._ate || f.data || hoje())}"></label></div>
+      <div id="ev-feedback"></div>
+    </aside></div>`,
     handler: async fd => {
       const o = Object.fromEntries(fd);
+      delete o._de; delete o._ate;
       o.titulo = o.titulo.trim();
       if (!o.colaborador_id || !o.titulo || !o.texto.trim()) return formErro("Preencha colaborador, assunto e o que foi conversado.");
       if (!await save("feedbacks", f.id, o)) return false;
       toast("Feedback salvo");
     }
   });
+  evidenciasNoFeedback();
 }
 
 /* ---------- cargos e salários ---------- */
@@ -1259,11 +1354,13 @@ const VIEWS = {
 
   feedbacks() {
     return `<div class="head"><div><h1>Feedbacks</h1><p>Histórico de conversas, reconhecimentos e combinados com cada colaborador.</p></div>
-        <div class="actions"><button type="button" class="btn primary" data-action="new-feedback">Registrar feedback</button></div></div>
+        <div class="actions"><button type="button" class="btn" data-action="new-evid">Nova evidência</button><button type="button" class="btn primary" data-action="new-feedback">Registrar feedback</button></div></div>
       ${seletorSetor()}
       <div class="toolbar">
         <select id="q-fbcolab" data-filter="fbColab" aria-label="Filtrar por colaborador"><option value="">Todos os colaboradores</option>${colabOptions(F.fbColab, false)}</select>
         <select id="q-fbtipo" data-filter="fbTipo" aria-label="Filtrar por tipo"><option value="">Todos os tipos</option>${TIPOS_FB.map(t => `<option ${F.fbTipo === t ? "selected" : ""}>${t}</option>`).join("")}</select>
+        <label class="small muted">Evidências de <input type="date" id="q-evde" data-filter="evDe" value="${esc(F.evDe)}" style="width:auto"></label>
+        <label class="small muted">até <input type="date" id="q-evate" data-filter="evAte" value="${esc(F.evAte)}" style="width:auto"></label>
       </div>
       <div id="lista"></div>`;
   },
@@ -1345,9 +1442,12 @@ const LISTAS = {
   feedbacks() {
     const base = S.feedbacks.filter(f => noEscopo(f.colaborador_id));
     const l = base.filter(f => (!F.fbColab || f.colaborador_id === F.fbColab) && (!F.fbTipo || f.tipo === F.fbTipo)).sort(byDataDesc);
-    if (!base.length) return `<section class="panel">${emptyState("Nenhum feedback salvo", "Registre o primeiro feedback para começar o histórico.", `<button type="button" class="btn sm primary" data-action="new-feedback">Registrar feedback</button>`)}</section>`;
-    if (!l.length) return `<section class="panel">${emptyState("Nenhum feedback com esses filtros", "Ajuste o colaborador ou o tipo.")}</section>`;
-    return `<div style="display:flex;flex-direction:column;gap:12px">${l.map(f => feedbackCard(f)).join("")}</div>`;
+    const cards = !base.length ? `<section class="panel">${emptyState("Nenhum feedback salvo", "Registre o primeiro feedback para começar o histórico.", `<button type="button" class="btn sm primary" data-action="new-feedback">Registrar feedback</button>`)}</section>`
+      : !l.length ? `<section class="panel">${emptyState("Nenhum feedback com esses filtros", "Ajuste o colaborador ou o tipo.")}</section>`
+      : `<div style="display:flex;flex-direction:column;gap:12px">${l.map(f => feedbackCard(f)).join("")}</div>`;
+    const evid = painelEvidencias(evidenciasDe(F.fbColab, F.evDe, F.evAte), { comNome: !F.fbColab, acoes: true,
+      botao: `<button type="button" class="btn link sm" data-action="new-evid">+ Nova</button>` });
+    return `<div class="fb-cols"><div>${cards}</div><aside class="fb-ev">${evid}</aside></div>`;
   },
 };
 
@@ -1404,7 +1504,7 @@ const ACTIONS = {
   "go": d => go(d.view),
   "perfil": d => go("perfil", d.id),
   "setor": d => { F.setor = d.setor; F.fbColab = ""; render(); },
-  "close-modal": () => closeModal(),
+  "close-modal": () => { const voltar = aoCancelarModal; aoCancelarModal = null; voltar ? voltar() : closeModal(); },
   "sair": async () => { await sb?.auth.signOut(); tela("telaLogin"); },
   "minha-senha": () => formMinhaSenha(),
   "new-colab": () => formColaborador(),
@@ -1453,6 +1553,20 @@ const ACTIONS = {
   "del-aval": d => confirmar("Excluir avaliação", `<p>Excluir esta avaliação de desempenho? Isso não pode ser desfeito.</p>`, "Excluir",
       async () => { if (!await remove("avaliacoes", d.id)) return false; toast("Avaliação excluída"); return true; }),
   "new-feedback": d => formFeedback({}, d.id),
+  "new-evid": d => formEvidencia({}, d.id || F.fbColab || undefined),
+  "edit-evid": d => formEvidencia(S.evidencias.find(e => e.id === d.id)),
+  "del-evid": d => {
+    const e = S.evidencias.find(x => x.id === d.id);
+    confirmar("Excluir evidência", `<p>Excluir a evidência <b>${esc(e.titulo)}</b> de ${esc(nomeDe(e.colaborador_id))}?</p>`,
+      "Excluir", async () => { if (!await remove("evidencias", e.id)) return false; toast("Evidência excluída"); return true; });
+  },
+  // dentro do feedback: guarda o que já foi digitado, abre a evidência e depois volta ao feedback
+  "evid-do-feedback": () => {
+    const rasc = Object.fromEntries(new FormData(mForm));
+    if (!rasc.colaborador_id) return formErro("Escolha o colaborador antes de registrar uma evidência.");
+    const f = { ...formFeedback.atual, ...rasc };
+    formEvidencia({}, rasc.colaborador_id, () => formFeedback(f, rasc.colaborador_id));
+  },
   "edit-feedback": d => formFeedback(S.feedbacks.find(f => f.id === d.id)),
   "del-feedback": d => confirmar("Excluir feedback", `<p>Excluir este feedback do histórico? Isso não pode ser desfeito.</p>`, "Excluir",
       async () => { if (!await remove("feedbacks", d.id)) return false; toast("Feedback excluído"); return true; }),
