@@ -203,6 +203,7 @@ dialog form { display: flex; flex-direction: column; max-height: calc(100vh - 40
 .q-group input { width: 18px; height: 18px; accent-color: var(--accent); cursor: pointer }
 .q-group caption { text-align: left; padding: 8px 12px; background: var(--surface-2); font-size: 0.8rem; font-weight: 700; color: var(--muted) }
 
+.sec-titulo { font-family: var(--display); font-size: 1.15rem; font-weight: 700; color: var(--accent); margin: 10px 0 2px }
 .comp-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--line) }
 .comp-row small { display: block; color: var(--muted) }
 .scale { display: flex; gap: 4px }
@@ -735,11 +736,11 @@ function formAvaliacao(a = {}, cid) {
       <div class="field"><label for="v-data">Data</label><input type="date" id="v-data" name="data" value="${esc(a.data || hoje())}"></div>
       <div class="field"><label for="v-avaliador">Avaliador</label><input type="text" id="v-avaliador" name="avaliador" value="${esc(a.avaliador ?? me.nome)}"></div>
     </div>
-    <div><p class="lbl">Competências <span class="muted">· 1 abaixo do esperado, 3 atende, 5 supera</span></p>
+    <div><h3 class="sec-titulo">Análise de Competências</h3><p class="small muted">1 abaixo do esperado, 3 atende, 5 supera</p>
     ${COMPETENCIAS.map(([n, d], i) => `<div class="comp-row"><div><b>${esc(n)}</b><small>${esc(d)}</small></div>
       <div class="scale" role="radiogroup" aria-label="${esc(n)}">${[1,2,3,4,5].map(v => `<label><input type="radio" name="comp_${i}" value="${v}" ${notas[n] == v ? "checked" : ""}><span>${v}</span></label>`).join("")}</div></div>`).join("")}
     </div>
-    <div><p class="lbl">Análise de desempenho comportamental <span class="muted">· E Excelente, S Satisfatório, R Regular, I Insatisfatório</span></p>
+    <div><h3 class="sec-titulo">Análise de Desempenho Comportamental</h3><p class="small muted">E Excelente, S Satisfatório, R Regular, I Insatisfatório</p>
     ${COMPORTAMENTAIS.map(([n, d], i) => `<div class="comp-row"><div><b>${esc(n)}</b>${d ? `<small>${esc(d)}</small>` : ""}</div>
       <div class="scale" role="radiogroup" aria-label="${esc(n)}">${Object.entries(CONCEITOS).map(([k, t]) => `<label title="${t}"><input type="radio" name="comport_${i}" value="${k}" ${notas.comportamental?.[n] === k ? "checked" : ""}><span>${k}</span></label>`).join("")}</div></div>`).join("")}
     </div>
@@ -1305,7 +1306,7 @@ function resumoComportamental(a) {
   const c = a.notas?.comportamental;
   if (!c) return "";
   const cont = Object.keys(CONCEITOS).map(k => [k, Object.values(c).filter(v => v === k).length]).filter(([, q]) => q);
-  return `<div><p class="lbl">Análise de desempenho comportamental</p>
+  return `<div><h3 class="sec-titulo">Análise de Desempenho Comportamental</h3>
     <div class="actions" style="margin-bottom:6px">${cont.map(([k, q]) => `<span class="pill ${CONCEITO_CLS[k]}">${q} ${CONCEITOS[k]}</span>`).join("")}</div>
     ${COMPORTAMENTAIS.map(([n], i) => `<div class="comp-row"><span>${esc(n)}</span><span class="pill ${CONCEITO_CLS[c[n]] || "plain"}">${c[n] ? c[n] + " · " + CONCEITOS[c[n]] : "—"}</span></div>`).join("")}</div>`;
 }
@@ -1317,7 +1318,7 @@ function verAvaliacao(a) {
       ${(() => { const f = notaFinal(a); return `<div class="kpi" style="text-align:center"><span>Nota final</span><b>${fmtNota(f.nota)}</b>
         <span><span class="pill ${CONCEITO_CLS[f.conceito]}">${CONCEITOS[f.conceito]}</span></span>
         <span class="small muted">Competências ${fmtNota(f.comp)}${f.comport != null ? " · Comportamental " + fmtNota(f.comport) : ""} (de 0 a 10)</span></div>`; })()}
-      <div>${COMPETENCIAS.map(([n]) => `<div class="comp-row"><b>${esc(n)}</b><span><span class="score">${a.notas?.[n] ?? "—"}</span> ${dots(a.notas?.[n] || 0)}</span></div>`).join("")}
+      <div><h3 class="sec-titulo">Análise de Competências</h3>${COMPETENCIAS.map(([n]) => `<div class="comp-row"><b>${esc(n)}</b><span><span class="score">${a.notas?.[n] ?? "—"}</span> ${dots(a.notas?.[n] || 0)}</span></div>`).join("")}
       <div class="comp-row"><b>Média das competências</b><span class="score" style="font-size:1.2rem">${fmtNota(a.media)}</span></div></div>
       ${resumoComportamental(a)}
       ${a.pontos_fortes ? `<div><p class="lbl">Pontos fortes</p><p style="white-space:pre-wrap">${esc(a.pontos_fortes)}</p></div>` : ""}
