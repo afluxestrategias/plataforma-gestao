@@ -298,10 +298,11 @@ dialog form { display: flex; flex-direction: column; max-height: calc(100vh - 40
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <script src="config.js?v=2"></script>
+<script src="disc-grupos.js?v=1"></script>
 <script>
 const SETORES = { CONTABIL: "Contábil", FISCAL: "Fiscal", DP: "Departamento Pessoal", ATENDIMENTO: "Atendimento" };
 const TABELAS = ["setores", "gestores", "colaboradores", "disc", "avaliacoes", "feedbacks"];
-const S = { setores: [], gestores: [], colaboradores: [], disc: [], avaliacoes: [], feedbacks: [], perfis: [] };
+const S = { setores: [], gestores: [], colaboradores: [], disc: [], avaliacoes: [], feedbacks: [], perfis: [], disc_convites: [] };
 let sb = null, me = null, carregado = false;
 let view = "painel", perfilId = null;
 const F = { setor: "", busca: "", status: "", fbColab: "", fbTipo: "", ciclo: "" };
@@ -320,25 +321,6 @@ const FACTORS = {
        fortes: ["Qualidade", "Análise", "Organização"], atencao: ["Perfeccionismo", "Demora para decidir", "Autocrítica alta"],
        liderar: "Dê informações e critérios claros, prazos realistas e respeite o método de trabalho." },
 };
-// Cada grupo traz uma palavra por fator, na ordem D, I, S, C
-const DISC_GRUPOS = [
-  ["Decidido", "Comunicativo", "Paciente", "Preciso"],
-  ["Competitivo", "Entusiasmado", "Leal", "Cuidadoso"],
-  ["Direto", "Sociável", "Calmo", "Analítico"],
-  ["Ousado", "Persuasivo", "Prestativo", "Organizado"],
-  ["Determinado", "Otimista", "Estável", "Detalhista"],
-  ["Assertivo", "Inspirador", "Tolerante", "Criterioso"],
-  ["Exigente", "Expressivo", "Conciliador", "Metódico"],
-  ["Independente", "Animado", "Bom ouvinte", "Disciplinado"],
-  ["Objetivo", "Carismático", "Constante", "Lógico"],
-  ["Corajoso", "Espontâneo", "Cooperativo", "Perfeccionista"],
-  ["Pioneiro", "Popular", "Previsível", "Sistemático"],
-  ["Firme", "Falante", "Gentil", "Reservado"],
-  ["Focado em resultados", "Influente", "Confiável", "Cauteloso"],
-  ["Ambicioso", "Bem-humorado", "Tranquilo", "Rigoroso"],
-  ["Dominante", "Extrovertido", "Harmonioso", "Ponderado"],
-  ["Rápido nas decisões", "Convincente", "Persistente", "Exato"],
-];
 const COMPETENCIAS = [
   ["Entrega de resultados", "Cumpre metas e prazos com qualidade"],
   ["Conhecimento técnico", "Domina as ferramentas e processos da função"],
@@ -414,7 +396,7 @@ function erroMsg(e) {
   return "Não foi possível salvar: " + (e?.message || "erro desconhecido") + ".";
 }
 async function carregar(tabelas = TABELAS) {
-  const lista = isAdmin() && tabelas === TABELAS ? [...tabelas, "perfis"] : tabelas;
+  const lista = isAdmin() && tabelas === TABELAS ? [...tabelas, "perfis", "disc_convites"] : tabelas;
   const res = await Promise.all(lista.map(t => sb.from(t).select("*")));
   res.forEach((r, i) => {
     if (r.error) return toast("Não foi possível carregar " + lista[i] + ": " + r.error.message, true);
@@ -477,10 +459,10 @@ document.getElementById("formLogin").addEventListener("submit", async e => {
 /* ---------- modal ---------- */
 const modal = document.getElementById("modal"), mForm = document.getElementById("modalForm");
 let onSubmit = null;
-function openModal({ title, body, submit = "Salvar", danger = false, handler, wide = false }) {
+function openModal({ title, body, submit = "Salvar", danger = false, handler, wide = false, cancelar = "Cancelar" }) {
   document.getElementById("mTitle").textContent = title;
   document.getElementById("mBody").innerHTML = body;
-  document.getElementById("mFoot").innerHTML = `<button type="button" class="btn" data-action="close-modal">Cancelar</button>${submit ? `<button type="submit" class="btn ${danger ? "danger solid" : "primary"}">${esc(submit)}</button>` : ""}`;
+  document.getElementById("mFoot").innerHTML = `<button type="button" class="btn" data-action="close-modal">${esc(cancelar)}</button>${submit ? `<button type="submit" class="btn ${danger ? "danger solid" : "primary"}">${esc(submit)}</button>` : ""}`;
   modal.style.width = wide ? "min(860px, calc(100vw - 32px))" : "";
   onSubmit = handler;
   if (!modal.open) modal.showModal();
@@ -609,11 +591,59 @@ function formLiderados(g) {
   });
 }
 
+// Link do teste DISC que a própria pessoa responde (página teste-disc.html)
+const linkDisc = token => new URL("teste-disc.html?t=" + token, location.href.split(/[?#]/)[0]).href;
+const situacaoConvite = v => v.respondido_em ? "respondido" : new Date(v.expira_em) < new Date() ? "expirado" : "aberto";
+const conviteAberto = cid => S.disc_convites.find(v => v.colaborador_id === cid && situacaoConvite(v) === "aberto");
+
+function escolherDisc(cid) {
+  if (!pessoas().length) return toast("Cadastre um colaborador antes de aplicar o teste.", true);
+  const opcao = (acao, titulo, texto) => `<button type="button" class="list-item" data-action="${acao}" data-id="${esc(cid || "")}" style="width:100%;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;cursor:pointer;margin-bottom:10px">
+    <div class="grow"><b>${titulo}</b><small class="muted" style="display:block">${texto}</small></div><span aria-hidden="true">›</span></button>`;
+  openModal({
+    title: "Aplicar teste DISC", submit: "",
+    body: opcao("disc-link", "Enviar link para a pessoa responder", "Gera um link para mandar por WhatsApp ou e-mail. A pessoa responde no celular ou no computador, sem login, e o resultado chega aqui sozinho.")
+      + opcao("disc-aqui", "Preencher aqui agora", "Você marca as respostas nesta tela, junto com a pessoa.")
+  });
+}
+
+function formDiscLink(cid) {
+  const lista = ativos().sort(byNome);
+  openModal({
+    title: "Enviar teste DISC por link", submit: "Gerar link",
+    body: `<div class="field"><label class="req" for="l-colab">Colaborador</label><select id="l-colab" name="colaborador_id"><option value="">Selecione…</option>${lista.map(c => `<option value="${esc(c.id)}" ${c.id === cid ? "selected" : ""}>${esc(c.nome)}</option>`).join("")}</select></div>
+      <p class="small muted">O link vale por 15 dias e só pode ser respondido uma vez. A pessoa não precisa de login e não vê os dados da plataforma, só o questionário.</p>`,
+    handler: async fd => {
+      const colaborador_id = fd.get("colaborador_id");
+      if (!colaborador_id) return formErro("Escolha o colaborador.");
+      const { data, error } = await sb.from("disc_convites").insert({ colaborador_id }).select().single();
+      if (error) { toast(erroMsg(error), true); return false; }
+      await carregar(["disc_convites"]);
+      mostrarLinkDisc(data);
+      return false;
+    }
+  });
+}
+
+function mostrarLinkDisc(v) {
+  const c = colab(v.colaborador_id), link = linkDisc(v.token);
+  const msg = `Olá, ${(c?.nome || "").split(" ")[0]}! Segue o link do seu teste de perfil comportamental (DISC) da AFLUX. Leva cerca de 10 minutos e não tem resposta certa ou errada: ${link}`;
+  openModal({
+    title: "Link do teste · " + (c?.nome || "Colaborador"), submit: "", cancelar: "Fechar",
+    body: `<div class="field"><label for="l-link">Link para a pessoa</label><input type="text" id="l-link" value="${esc(link)}" readonly onclick="this.select()"></div>
+      <div class="actions" style="display:flex;gap:8px;flex-wrap:wrap">
+        <button type="button" class="btn primary" data-action="copiar" data-texto="${esc(link)}">Copiar link</button>
+        <button type="button" class="btn" data-action="copiar" data-texto="${esc(msg)}">Copiar mensagem pronta</button>
+        <a class="btn" href="https://wa.me/?text=${encodeURIComponent(msg)}" target="_blank" rel="noopener">Enviar pelo WhatsApp</a>
+      </div>
+      <p class="small muted">Válido até ${fmtData(String(v.expira_em).slice(0, 10))}. Quando a pessoa terminar, o resultado aparece em Testes DISC e no perfil dela.</p>`
+  });
+}
+
 function formDiscTeste(cid) {
   if (!pessoas().length) return toast("Cadastre um colaborador antes de aplicar o teste.", true);
   const grupos = DISC_GRUPOS.map((g, gi) => {
-    // embaralha a ordem de exibição de forma fixa por grupo
-    const ordem = [0, 1, 2, 3].sort((x, y) => ((x * 7 + gi * 3) % 4) - ((y * 7 + gi * 3) % 4));
+    const ordem = discOrdem(gi);
     const F4 = "DISC";
     return `<div class="q-group" data-g="${gi}"><table><caption>Grupo ${gi + 1} de ${DISC_GRUPOS.length}</caption>
       <thead><tr><th>Palavra</th><th>Mais</th><th>Menos</th></tr></thead><tbody>
@@ -628,7 +658,7 @@ function formDiscTeste(cid) {
       <div class="field"><label class="req" for="d-colab">Colaborador</label><select id="d-colab" name="colaborador_id">${colabOptions(cid)}</select></div>
       <div class="field"><label for="d-data">Data</label><input type="date" id="d-data" name="data" value="${hoje()}"></div>
     </div>
-    <p class="muted small">Em cada grupo, marque a palavra que <b>mais</b> descreve a pessoa no trabalho e a que <b>menos</b> descreve. Responda pela primeira impressão. Leva cerca de 8 minutos.</p>
+    <p class="muted small">Em cada grupo, marque a palavra que <b>mais</b> descreve a pessoa no trabalho e a que <b>menos</b> descreve. Responda pela primeira impressão. Leva cerca de 10 minutos.</p>
     ${grupos}`,
     handler: async fd => {
       const cidSel = fd.get("colaborador_id");
@@ -824,6 +854,21 @@ function seletorSetor() {
     ${vs.map(k => `<button type="button" class="chip" data-action="setor" data-setor="${k}" aria-pressed="${F.setor === k}">${SETORES[k]}</button>`).join("")}</div>`;
 }
 
+// Links do teste DISC enviados às pessoas (só a administradora vê)
+function linksDisc() {
+  const pend = S.disc_convites.filter(v => !v.respondido_em && noEscopo(v.colaborador_id)).sort((a, b) => b.criado_em.localeCompare(a.criado_em));
+  const resp = S.disc_convites.filter(v => v.respondido_em && noEscopo(v.colaborador_id)).sort((a, b) => b.respondido_em.localeCompare(a.respondido_em)).slice(0, 5);
+  if (!pend.length && !resp.length) return "";
+  return `<section class="panel"><header><h2>Testes enviados por link</h2><button type="button" class="btn sm" data-action="atualizar-disc">Atualizar</button></header>
+    <div class="list">${pend.map(v => { const exp = situacaoConvite(v) === "expirado";
+      return `<div class="list-item"><div class="grow person">${avatar(colab(v.colaborador_id))}<div><b>${esc(nomeDe(v.colaborador_id))}</b><small>Enviado em ${fmtData(v.criado_em.slice(0, 10))} · ${exp ? "expirou em" : "vale até"} ${fmtData(v.expira_em.slice(0, 10))}</small></div></div>
+        ${exp ? `<span class="pill bad">Expirado</span>` : `<span class="pill warn">Aguardando resposta</span>`}
+        ${exp ? "" : `<button type="button" class="btn sm" data-action="ver-link" data-id="${esc(v.id)}">Ver link</button>`}
+        <button type="button" class="btn sm danger" data-action="cancelar-link" data-id="${esc(v.id)}">${exp ? "Remover" : "Cancelar"}</button></div>`; }).join("")}
+      ${resp.map(v => `<div class="list-item"><div class="grow person">${avatar(colab(v.colaborador_id))}<div><b>${esc(nomeDe(v.colaborador_id))}</b><small>Respondido em ${fmtData(v.respondido_em.slice(0, 10))}</small></div></div><span class="pill ok">Respondido</span><button type="button" class="btn sm" data-action="perfil" data-id="${esc(v.colaborador_id)}">Ver resultado</button></div>`).join("")}</div>
+  </section>`;
+}
+
 /* ---------- telas ---------- */
 const VIEWS = {
   painel() {
@@ -936,7 +981,7 @@ const VIEWS = {
   disc() {
     const at = ativos();
     const linhas = at.map(c => [c, ultimoDisc(c.id)]).sort((a, b) => !!b[1] - !!a[1] || byNome(a[0], b[0]));
-    return `<div class="head"><div><h1>Testes DISC</h1><p>Mapeamento comportamental em quatro fatores.${isAdmin() ? " Aplique o questionário de 16 grupos na plataforma ou lance resultados de outra ferramenta." : " Os testes são aplicados e registrados pelo RH."}</p></div>
+    return `<div class="head"><div><h1>Testes DISC</h1><p>Mapeamento comportamental em quatro fatores.${isAdmin() ? " Envie o link do questionário para a pessoa responder, aplique aqui mesmo ou lance resultados de outra ferramenta." : " Os testes são aplicados e registrados pelo RH."}</p></div>
         ${isAdmin() ? `<div class="actions"><button type="button" class="btn" data-action="disc-externo">Lançar resultado</button><button type="button" class="btn primary" data-action="disc-teste">Aplicar teste</button></div>` : ""}</div>
       ${seletorSetor()}
       <div class="factor-cards">${"DISC".split("").map(f => `<div class="factor" style="border-top-color:var(--${f.toLowerCase()})">
@@ -947,9 +992,10 @@ const VIEWS = {
         ${at.length ? `<div class="table-wrap"><table><thead><tr><th>Colaborador</th><th>Setor</th><th>Perfil</th><th>D</th><th>I</th><th>S</th><th>C</th><th>Data</th>${isAdmin() ? "<th></th>" : ""}</tr></thead><tbody>
           ${linhas.map(([c, d]) => `<tr class="click" data-action="perfil" data-id="${esc(c.id)}"><td><div class="person">${avatar(c)}<div><b>${esc(c.nome)}</b><small>${esc(c.cargo)}</small></div></div></td><td><span class="tag">${esc(SETORES[c.setor])}</span></td>
             <td>${discChip(d)}</td>${"DISC".split("").map(f => `<td class="num ${d && d.perfil.includes(f) ? "t-" + f : "muted"}" style="font-weight:700">${d ? d[f] : "—"}</td>`).join("")}
-            <td class="num">${d ? fmtData(d.data) : "—"}</td>${isAdmin() ? `<td>${d ? "" : `<button type="button" class="btn sm" data-action="disc-teste" data-id="${esc(c.id)}">Aplicar</button>`}</td>` : ""}</tr>`).join("")}
+            <td class="num">${d ? fmtData(d.data) : "—"}</td>${isAdmin() ? `<td>${d ? "" : conviteAberto(c.id) ? `<span class="pill warn">Link enviado</span>` : `<button type="button" class="btn sm" data-action="disc-teste" data-id="${esc(c.id)}">Aplicar</button>`}</td>` : ""}</tr>`).join("")}
           </tbody></table></div>` : emptyState("Nenhum colaborador neste setor", isAdmin() ? "Cadastre a equipe para começar a aplicar os testes." : "Ainda não há colaboradores cadastrados nos seus setores.")}
-      </section>`;
+      </section>
+      ${isAdmin() ? linksDisc() : ""}`;
   },
 
   desempenho() {
@@ -1147,7 +1193,20 @@ const ACTIONS = {
       "Excluir", async () => { if (!await remove("gestores", g.id)) return false; toast("Gestor excluído"); return true; });
   },
   "edit-setor": d => formSetor(S.setores.find(s => s.codigo === d.id) || { codigo: d.id }),
-  "disc-teste": d => formDiscTeste(d.id),
+  "disc-teste": d => escolherDisc(d.id),
+  "disc-aqui": d => formDiscTeste(d.id || undefined),
+  "disc-link": d => formDiscLink(d.id || undefined),
+  "ver-link": d => mostrarLinkDisc(S.disc_convites.find(v => v.id === d.id)),
+  "cancelar-link": d => {
+    const v = S.disc_convites.find(x => x.id === d.id);
+    confirmar("Cancelar link", `<p>Cancelar o link do teste de <b>${esc(nomeDe(v.colaborador_id))}</b>? Se a pessoa abrir o link depois, verá que ele não vale mais.</p>`,
+      "Cancelar link", async () => { if (!await remove("disc_convites", v.id)) return false; toast("Link cancelado"); return true; });
+  },
+  "atualizar-disc": async () => { await carregar(["disc", "disc_convites"]); toast("Lista atualizada"); },
+  "copiar": async d => {
+    try { await navigator.clipboard.writeText(d.texto); toast("Copiado"); }
+    catch (e) { const el = document.getElementById("l-link"); el?.select(); toast("Selecione e copie com Ctrl+C", true); }
+  },
   "disc-externo": d => formDiscExterno(d.id),
   "del-disc": d => confirmar("Excluir resultado DISC", `<p>Excluir este resultado de teste? Isso não pode ser desfeito.</p>`, "Excluir",
       async () => { if (!await remove("disc", d.id)) return false; toast("Resultado excluído"); return true; }),

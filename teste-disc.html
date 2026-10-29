@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>AFLUX · Teste DISC</title>
+<link rel="icon" href="logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700&family=Nunito+Sans:opsz,wght@6..12,400;6..12,600;6..12,700&display=swap">
+<style>
+:root {
+  color-scheme: light;
+  /* cores da marca AFLUX: azul-marinho #27306A, rosa #C44E60, lilás #A486A2 */
+  --bg: #F4F4F9; --surface: #FFFFFF; --surface-2: #ECEDF4; --ink: #1B1F45; --muted: #5E6185; --line: #DCDDEA;
+  --accent: #27306A; --accent-ink: #FFFFFF; --accent-soft: #E7E8F3;
+  --brand-grad: linear-gradient(90deg, #C44E60, #A486A2);
+  --mais: #2E8B57; --mais-soft: #E3F3EA; --menos: #C0392B; --menos-soft: #F8E5E3; --bad: #C0392B;
+  --display: "Sora", "Segoe UI", system-ui, sans-serif;
+  --body: "Nunito Sans", "Segoe UI", system-ui, sans-serif;
+  --r: 12px;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #10122A; --surface: #181B3A; --surface-2: #222547; --ink: #E9EAF5; --muted: #A2A5C6; --line: #2E3260;
+  --accent: #A9B1F0; --accent-ink: #141838; --accent-soft: #2A2F63;
+  --mais: #5CC98A; --mais-soft: #18382A; --menos: #F07A6E; --menos-soft: #3E1F22; --bad: #F07A6E; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #10122A; --surface: #181B3A; --surface-2: #222547; --ink: #E9EAF5; --muted: #A2A5C6; --line: #2E3260;
+  --accent: #A9B1F0; --accent-ink: #141838; --accent-soft: #2A2F63;
+  --mais: #5CC98A; --mais-soft: #18382A; --menos: #F07A6E; --menos-soft: #3E1F22; --bad: #F07A6E; color-scheme: dark }
+
+* { box-sizing: border-box }
+html, body { margin: 0 }
+body { background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 16px; line-height: 1.5; min-height: 100vh }
+[hidden] { display: none !important }
+h1, h2 { font-family: var(--display); margin: 0; letter-spacing: -0.01em; text-wrap: balance }
+h1 { font-size: 1.45rem } h2 { font-size: 1.1rem }
+p { margin: 0 }
+button { font: inherit; color: inherit }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px }
+
+.wrap { max-width: 560px; margin: 0 auto; padding: 20px 16px 40px; display: flex; flex-direction: column; gap: 18px }
+.top { display: flex; flex-direction: column; gap: 10px }
+.logo { width: 140px; height: auto; display: block; border-radius: 8px }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .logo { background: #fff; padding: 6px 8px } }
+:root[data-theme="dark"] .logo { background: #fff; padding: 6px 8px }
+.bar { height: 4px; border-radius: 4px; background: var(--brand-grad); width: 64px }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 20px; display: flex; flex-direction: column; gap: 14px }
+.muted { color: var(--muted) }
+.small { font-size: .9rem }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 12px 18px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); cursor: pointer; font-weight: 700 }
+.btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent) }
+.btn:disabled { opacity: .5; cursor: not-allowed }
+.btn.link { border: 0; background: none; padding: 8px 4px; color: var(--muted) }
+.row { display: flex; gap: 10px; justify-content: space-between; align-items: center }
+ul.how { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 6px }
+
+.prog { display: flex; flex-direction: column; gap: 6px }
+.prog-track { height: 8px; border-radius: 8px; background: var(--surface-2); overflow: hidden }
+.prog-fill { height: 100%; background: var(--brand-grad); transition: width .25s }
+
+.words { display: flex; flex-direction: column; gap: 10px }
+.word { display: grid; grid-template-columns: 1fr auto auto; gap: 8px; align-items: center; padding: 10px 10px 10px 14px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface) }
+.word b { font-weight: 700 }
+.word.is-mais { border-color: var(--mais); background: var(--mais-soft) }
+.word.is-menos { border-color: var(--menos); background: var(--menos-soft) }
+.pick { min-width: 68px; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); cursor: pointer; font-weight: 700; font-size: .85rem; color: var(--muted) }
+.pick[aria-pressed="true"].m { background: var(--mais); border-color: var(--mais); color: #fff }
+.pick[aria-pressed="true"].n { background: var(--menos); border-color: var(--menos); color: #fff }
+.legend { display: flex; gap: 14px; flex-wrap: wrap }
+.legend span::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; vertical-align: 0 }
+.legend .m::before { background: var(--mais) } .legend .n::before { background: var(--menos) }
+.err { color: var(--bad); font-weight: 700 }
+.center { text-align: center; align-items: center }
+.big { font-size: 2.4rem; line-height: 1 }
+</style>
+</head>
+<body>
+<main class="wrap">
+  <header class="top">
+    <img class="logo" src="logo.png" alt="AFLUX Estratégia Financeira Contábil">
+    <div class="bar"></div>
+  </header>
+
+  <section id="tCarregando" class="card"><p class="muted">Abrindo o seu teste…</p></section>
+
+  <section id="tAviso" class="card center" hidden>
+    <span class="big" id="avisoIcone" aria-hidden="true">!</span>
+    <h1 id="avisoTitulo"></h1>
+    <p class="muted" id="avisoTexto"></p>
+  </section>
+
+  <section id="tIntro" class="card" hidden>
+    <h1 id="ola">Olá!</h1>
+    <p>Este é o seu teste de <b>perfil comportamental DISC</b>. Ele mostra como você costuma agir no trabalho: como decide, se comunica, lida com o ritmo e com regras.</p>
+    <ul class="how">
+      <li>São <b id="nGrupos">24</b> grupos com 4 palavras cada.</li>
+      <li>Em cada grupo, marque a palavra que <b>MAIS</b> combina com você e a que <b>MENOS</b> combina.</li>
+      <li>Pense em como você é no trabalho no dia a dia, não em como gostaria de ser.</li>
+      <li>Não existe resposta certa ou errada. Vá pela primeira impressão.</li>
+      <li>Leva cerca de 10 minutos. Se fechar a página, suas respostas ficam guardadas neste aparelho.</li>
+    </ul>
+    <button type="button" class="btn primary" id="comecar">Começar</button>
+  </section>
+
+  <section id="tGrupo" class="card" hidden>
+    <div class="prog">
+      <div class="row small"><b id="gNum">Grupo 1 de 24</b><span class="muted" id="gFeito"></span></div>
+      <div class="prog-track"><div class="prog-fill" id="gBarra" style="width:0"></div></div>
+    </div>
+    <div class="legend small muted"><span class="m">Mais combina comigo</span><span class="n">Menos combina comigo</span></div>
+    <div class="words" id="gPalavras"></div>
+    <p class="err small" id="gErro" hidden></p>
+    <div class="row">
+      <button type="button" class="btn link" id="voltar">‹ Voltar</button>
+      <button type="button" class="btn primary" id="avancar" disabled>Próximo</button>
+    </div>
+  </section>
+
+  <section id="tFim" class="card" hidden>
+    <h1>Tudo respondido</h1>
+    <p>Você respondeu todos os grupos. Se quiser revisar alguma resposta, use “Voltar”. Quando estiver tudo certo, clique em <b>Enviar respostas</b>.</p>
+    <p class="err small" id="fErro" hidden></p>
+    <div class="row">
+      <button type="button" class="btn link" id="revisar">‹ Voltar</button>
+      <button type="button" class="btn primary" id="enviar">Enviar respostas</button>
+    </div>
+  </section>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script src="config.js?v=2"></script>
+<script src="disc-grupos.js?v=1"></script>
+<script>
+const $ = id => document.getElementById(id);
+const TELAS = ["tCarregando", "tAviso", "tIntro", "tGrupo", "tFim"];
+const tela = nome => { TELAS.forEach(t => $(t).hidden = t !== nome); window.scrollTo(0, 0); };
+const N = DISC_GRUPOS.length, F4 = "DISC";
+const token = new URLSearchParams(location.search).get("t") || "";
+const CHAVE = "disc-respostas-" + token;
+let sb, atual = 0;
+let R = { mais: Array(N).fill(null), menos: Array(N).fill(null) };
+
+function aviso(icone, titulo, texto) {
+  $("avisoIcone").textContent = icone; $("avisoTitulo").textContent = titulo; $("avisoTexto").textContent = texto;
+  tela("tAviso");
+}
+// Guarda as respostas neste aparelho para não perder se a página fechar
+function guardar() { try { localStorage.setItem(CHAVE, JSON.stringify(R)); } catch (e) {} }
+function recuperar() {
+  try { const r = JSON.parse(localStorage.getItem(CHAVE)); if (r && r.mais?.length === N && r.menos?.length === N) R = r; } catch (e) {}
+}
+const respondidos = () => R.mais.filter((m, i) => m && R.menos[i]).length;
+
+function mostrarGrupo(gi) {
+  atual = gi;
+  const g = DISC_GRUPOS[gi];
+  $("gNum").textContent = `Grupo ${gi + 1} de ${N}`;
+  $("gFeito").textContent = `${respondidos()} respondido(s)`;
+  $("gBarra").style.width = (respondidos() / N * 100) + "%";
+  $("gErro").hidden = true;
+  $("gPalavras").innerHTML = discOrdem(gi).map(k => {
+    const f = F4[k], m = R.mais[gi] === f, n = R.menos[gi] === f;
+    return `<div class="word ${m ? "is-mais" : n ? "is-menos" : ""}"><b>${g[k]}</b>
+      <button type="button" class="pick m" data-f="${f}" data-tipo="mais" aria-pressed="${m}" aria-label="${g[k]}: mais combina comigo">Mais</button>
+      <button type="button" class="pick n" data-f="${f}" data-tipo="menos" aria-pressed="${n}" aria-label="${g[k]}: menos combina comigo">Menos</button></div>`;
+  }).join("");
+  $("avancar").disabled = !(R.mais[gi] && R.menos[gi]);
+  $("avancar").textContent = gi === N - 1 ? "Concluir" : "Próximo";
+  $("voltar").style.visibility = gi === 0 ? "hidden" : "visible";
+  tela("tGrupo");
+}
+
+$("gPalavras").addEventListener("click", e => {
+  const b = e.target.closest(".pick"); if (!b) return;
+  const { f, tipo } = b.dataset, outro = tipo === "mais" ? "menos" : "mais";
+  const antes = !!(R.mais[atual] && R.menos[atual]);
+  R[tipo][atual] = R[tipo][atual] === f ? null : f;
+  // a mesma palavra não pode ser "mais" e "menos" ao mesmo tempo
+  if (R[tipo][atual] === f && R[outro][atual] === f) R[outro][atual] = null;
+  guardar();
+  mostrarGrupo(atual);
+  clearTimeout(avancar._t);
+  // avança sozinho quando o grupo acabou de ficar completo
+  if (!antes && R.mais[atual] && R.menos[atual]) { const gi = atual; avancar._t = setTimeout(() => { if (atual === gi) avancar(); }, 450); }
+});
+
+function avancar() {
+  if (!(R.mais[atual] && R.menos[atual])) { $("gErro").textContent = "Marque uma palavra em “Mais” e outra em “Menos”."; $("gErro").hidden = false; return; }
+  if (atual < N - 1) return mostrarGrupo(atual + 1);
+  const primeiraFalta = R.mais.findIndex((m, i) => !(m && R.menos[i]));
+  if (primeiraFalta >= 0) return mostrarGrupo(primeiraFalta);
+  tela("tFim");
+}
+$("avancar").addEventListener("click", () => { clearTimeout(avancar._t); avancar(); });
+$("voltar").addEventListener("click", () => { clearTimeout(avancar._t); if (atual > 0) mostrarGrupo(atual - 1); });
+$("revisar").addEventListener("click", () => mostrarGrupo(N - 1));
+$("comecar").addEventListener("click", () => {
+  const primeiraFalta = R.mais.findIndex((m, i) => !(m && R.menos[i]));
+  primeiraFalta >= 0 ? mostrarGrupo(primeiraFalta) : tela("tFim");
+});
+
+$("enviar").addEventListener("click", async () => {
+  const primeiraFalta = R.mais.findIndex((m, i) => !(m && R.menos[i]));
+  if (primeiraFalta >= 0) return mostrarGrupo(primeiraFalta);
+  const btn = $("enviar"); btn.disabled = true; btn.textContent = "Enviando…"; $("fErro").hidden = true;
+  const { error } = await sb.rpc("disc_responder", { t: token, mais: R.mais, menos: R.menos });
+  btn.disabled = false; btn.textContent = "Enviar respostas";
+  if (error) {
+    const msg = error.message || "";
+    if (/respondido|expirou|inválido/i.test(msg)) return aviso("!", "Não foi possível enviar", msg);
+    $("fErro").textContent = "Não foi possível enviar agora. Verifique a internet e tente de novo."; $("fErro").hidden = false;
+    return;
+  }
+  try { localStorage.removeItem(CHAVE); } catch (e) {}
+  aviso("✓", "Respostas enviadas. Obrigado!", "O RH da AFLUX já recebeu o seu teste e vai conversar com você sobre o resultado. Você já pode fechar esta página.");
+});
+
+(async function iniciar() {
+  $("nGrupos").textContent = N;
+  const cfg = window.CONFIG || {};
+  if (!token || !/^[0-9a-f-]{36}$/i.test(token)) return aviso("!", "Link incompleto", "Confira se você abriu o link inteiro que recebeu. Se o problema continuar, peça um novo link ao RH.");
+  if (!window.supabase || !cfg.SUPABASE_URL) return aviso("!", "Não foi possível abrir o teste", "Tente de novo em alguns minutos.");
+  sb = window.supabase.createClient(cfg.SUPABASE_URL, cfg.SUPABASE_ANON_KEY, { auth: { persistSession: false } });
+  const { data, error } = await sb.rpc("disc_convite", { t: token });
+  if (error) return aviso("!", "Não foi possível abrir o teste", "Verifique a internet e tente de novo.");
+  if (!data) return aviso("!", "Link inválido", "Este link não existe ou foi cancelado. Peça um novo link ao RH.");
+  if (data.situacao === "respondido") return aviso("✓", "Teste já respondido", "Este teste já foi enviado. Obrigado!");
+  if (data.situacao === "expirado") return aviso("!", "Link expirado", "O prazo para responder este teste acabou. Peça um novo link ao RH.");
+  $("ola").textContent = data.nome ? `Olá, ${data.nome}!` : "Olá!";
+  recuperar();
+  if (respondidos()) $("comecar").textContent = "Continuar de onde parei";
+  tela("tIntro");
+})();
+</script>
+</body>
+</html>
