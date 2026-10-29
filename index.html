@@ -298,7 +298,6 @@ dialog form { display: flex; flex-direction: column; max-height: calc(100vh - 40
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <script src="config.js?v=2"></script>
-<script src="disc-grupos.js?v=1"></script>
 <script>
 const SETORES = { CONTABIL: "Contábil", FISCAL: "Fiscal", DP: "Departamento Pessoal", ATENDIMENTO: "Atendimento" };
 const TABELAS = ["setores", "gestores", "colaboradores", "disc", "avaliacoes", "feedbacks"];
@@ -775,6 +774,18 @@ function discBars(d) {
   return `<div class="bars">${"DISC".split("").map(f => `<div class="bar-row"><span><b class="t-${f}">${f}</b> ${FACTORS[f].nome}</span>
     <div class="bar-track"><div class="bar-fill f-${f}" style="width:${d[f]}%"></div></div><span class="num">${d[f]}</span></div>`).join("")}</div>`;
 }
+// Teste por adjetivos: além do perfil natural ("como sou"), mostra o adaptado ("como esperam que eu seja")
+function discAdaptado(d) {
+  const r = d.respostas;
+  if (r?.formato !== "adjetivos" || !r.adaptado) return "";
+  const a = r.adaptado, p = a.perfil || perfilDe({ D: a.D, I: a.I, S: a.S, C: a.C });
+  return `<p class="eyebrow" style="margin-top:16px">Como sente que esperam que seja (perfil adaptado)</p>
+    ${discBars(a)}
+    <p class="small" style="margin-top:8px">${discChip({ perfil: p })} ${p[0] !== d.perfil[0] ? `O ambiente pede mais <b class="t-${p[0]}">${FACTORS[p[0]].nome}</b> do que o jeito natural da pessoa. Vale conversar sobre isso, porque adaptar-se por muito tempo costuma gerar desgaste.` : "O que a pessoa sente que esperam dela está alinhado com o jeito natural dela."}</p>
+    <details style="margin-top:8px"><summary class="small muted" style="cursor:pointer">Palavras marcadas</summary>
+      <p class="small" style="margin-top:6px"><b>Como sou:</b> ${esc((r.sou || []).join(", "))}</p>
+      <p class="small" style="margin-top:4px"><b>Como esperam que eu seja:</b> ${esc((r.esperam || []).join(", "))}</p></details>`;
+}
 const emptyState = (titulo, texto, acao) => `<div class="empty"><b>${titulo}</b><span>${texto}</span>${acao || ""}</div>`;
 function feedbackCard(f, comNome = true) {
   const c = colab(f.colaborador_id);
@@ -807,7 +818,7 @@ function linksDisc() {
         ${exp ? `<span class="pill bad">Expirado</span>` : `<span class="pill warn">Aguardando resposta</span>`}
         ${exp ? "" : `<button type="button" class="btn sm primary" data-action="copiar" data-texto="${esc(linkDisc(v.token))}">Copiar link</button><button type="button" class="btn sm" data-action="ver-link" data-id="${esc(v.id)}">Ver link</button>`}
         <button type="button" class="btn sm danger" data-action="cancelar-link" data-id="${esc(v.id)}">${exp ? "Remover" : "Cancelar"}</button></div>`; }).join("")}
-      ${resp.map(v => `<div class="list-item"><div class="grow person">${avatar(colab(v.colaborador_id))}<div><b>${esc(nomeDe(v.colaborador_id))}</b><small>Respondido em ${fmtData(v.respondido_em.slice(0, 10))}</small></div></div><span class="pill ok">Respondido</span><button type="button" class="btn sm" data-action="perfil" data-id="${esc(v.colaborador_id)}">Ver resultado</button></div>`).join("")}</div>
+      ${resp.map(v => `<div class="list-item"><div class="grow person">${avatar(colab(v.colaborador_id))}<div><b>${esc(nomeDe(v.colaborador_id))}</b><small>Respondido em ${fmtData(v.respondido_em.slice(0, 10))}${v.nome_informado ? " por " + esc(v.nome_informado) : ""}${v.telefone ? " · " + esc(v.telefone) : ""}</small></div></div><span class="pill ok">Respondido</span><button type="button" class="btn sm" data-action="perfil" data-id="${esc(v.colaborador_id)}">Ver resultado</button></div>`).join("")}</div>
   </section>`;
 }
 
@@ -903,10 +914,11 @@ const VIEWS = {
           ${d ? `${discBars(d)}
             <p style="margin-top:14px"><b class="t-${d.perfil[0]}">${FACTORS[d.perfil[0]].nome}</b>${d.perfil[1] ? ` com traços de <b class="t-${d.perfil[1]}">${FACTORS[d.perfil[1]].nome}</b>` : ""}. ${esc(FACTORS[d.perfil[0]].resumo)}</p>
             <p class="small" style="margin-top:8px"><b>Como liderar:</b> ${esc(FACTORS[d.perfil[0]].liderar)}</p>
-            <p class="small muted" style="margin-top:8px">${esc(d.origem)} · <span class="num">${fmtData(d.data)}</span></p>
+            <p class="small muted" style="margin-top:8px">${esc(d.origem)} · <span class="num">${fmtData(d.data)}</span>${adm && d.respostas?.nome ? ` · respondido por ${esc(d.respostas.nome)}${d.respostas.telefone ? " · " + esc(d.respostas.telefone) : ""}` : ""}</p>
+            ${discAdaptado(d)}
             ${discs.length > 1 ? `<p class="eyebrow" style="margin-top:14px">Histórico</p><div class="list">${discs.slice(1).map(x => `<div class="list-item"><span class="num small">${fmtData(x.data)}</span>${discChip(x)}<span class="small muted grow num">D ${x.D} · I ${x.I} · S ${x.S} · C ${x.C}</span>${adm ? `<button type="button" class="btn link sm danger" data-action="del-disc" data-id="${esc(x.id)}">Excluir</button>` : ""}</div>`).join("")}</div>` : ""}
             ${adm ? `<div style="margin-top:8px"><button type="button" class="btn link sm danger" data-action="del-disc" data-id="${esc(d.id)}">Excluir resultado atual</button></div>` : ""}`
-          : emptyState("Sem teste DISC", adm ? "Aplique o questionário aqui mesmo ou lance um resultado de outra ferramenta." : "O RH ainda não registrou um teste para esta pessoa.")}
+          : emptyState("Sem teste DISC", adm ? "Gere o link do teste para a pessoa responder ou lance um resultado de outra ferramenta." : "O RH ainda não registrou um teste para esta pessoa.")}
         </section>
         <section class="panel"><header><h2>Avaliações de desempenho</h2><button type="button" class="btn sm" data-action="new-aval" data-id="${esc(c.id)}">Nova avaliação</button></header>
           ${avs.length ? `<div class="list">${avs.map(v => `<div class="list-item"><div class="grow"><b>${esc(v.ciclo)}</b><p class="small muted">${fmtData(v.data)}${v.avaliador ? " · " + esc(v.avaliador) : ""} · potencial ${esc(v.potencial).toLowerCase()}</p>

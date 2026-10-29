@@ -39,7 +39,7 @@ p { margin: 0 }
 button { font: inherit; color: inherit }
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px }
 
-.wrap { max-width: 560px; margin: 0 auto; padding: 20px 16px 40px; display: flex; flex-direction: column; gap: 18px }
+.wrap { max-width: 960px; margin: 0 auto; padding: 20px 16px 40px; display: flex; flex-direction: column; gap: 18px }
 .top { display: flex; flex-direction: column; gap: 10px }
 .logo { width: 140px; height: auto; display: block; border-radius: 8px }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .logo { background: #fff; padding: 6px 8px } }
@@ -53,23 +53,23 @@ button { font: inherit; color: inherit }
 .btn:disabled { opacity: .5; cursor: not-allowed }
 .btn.link { border: 0; background: none; padding: 8px 4px; color: var(--muted) }
 .row { display: flex; gap: 10px; justify-content: space-between; align-items: center }
-ul.how { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 6px }
 
 .prog { display: flex; flex-direction: column; gap: 6px }
 .prog-track { height: 8px; border-radius: 8px; background: var(--surface-2); overflow: hidden }
 .prog-fill { height: 100%; background: var(--brand-grad); transition: width .25s }
 
-.words { display: flex; flex-direction: column; gap: 10px }
-.word { display: grid; grid-template-columns: 1fr auto auto; gap: 8px; align-items: center; padding: 10px 10px 10px 14px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface) }
-.word b { font-weight: 700 }
-.word.is-mais { border-color: var(--mais); background: var(--mais-soft) }
-.word.is-menos { border-color: var(--menos); background: var(--menos-soft) }
-.pick { min-width: 68px; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); cursor: pointer; font-weight: 700; font-size: .85rem; color: var(--muted) }
-.pick[aria-pressed="true"].m { background: var(--mais); border-color: var(--mais); color: #fff }
-.pick[aria-pressed="true"].n { background: var(--menos); border-color: var(--menos); color: #fff }
-.legend { display: flex; gap: 14px; flex-wrap: wrap }
-.legend span::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; vertical-align: 0 }
-.legend .m::before { background: var(--mais) } .legend .n::before { background: var(--menos) }
+.field { display: flex; flex-direction: column; gap: 6px; max-width: 460px }
+.field label { font-weight: 700; font-size: .92rem }
+.field input { padding: 12px 14px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); font: inherit; color: inherit }
+.field input:focus { outline: 2px solid var(--accent); outline-offset: 0; border-color: var(--accent) }
+
+.pergunta { font-size: 1.15rem; font-family: var(--display); font-weight: 600 }
+.pergunta mark { background: var(--accent-soft); color: inherit; padding: 1px 6px; border-radius: 6px }
+.adjs { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px }
+.adj { text-align: left; padding: 11px 14px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); cursor: pointer; font-size: .95rem; min-height: 44px }
+.adj:hover { border-color: var(--accent) }
+.adj[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); font-weight: 700 }
+.rodape { position: sticky; bottom: 0; background: var(--surface); border-top: 1px solid var(--line); margin: 0 -20px -20px; padding: 12px 20px; border-radius: 0 0 var(--r) var(--r) }
 .err { color: var(--bad); font-weight: 700 }
 .center { text-align: center; align-items: center }
 .big { font-size: 2.4rem; line-height: 1 }
@@ -90,57 +90,52 @@ ul.how { margin: 0; padding-left: 20px; display: flex; flex-direction: column; g
     <p class="muted" id="avisoTexto"></p>
   </section>
 
-  <section id="tIntro" class="card" hidden>
+  <!-- Passo 1: dados da pessoa -->
+  <form id="tDados" class="card" hidden novalidate>
+    <div class="prog"><b class="small">Passo 1 de 3</b><div class="prog-track"><div class="prog-fill" style="width:33%"></div></div></div>
     <h1 id="ola">Olá!</h1>
-    <p>Este é o seu teste de <b>perfil comportamental DISC</b>. Ele mostra como você costuma agir no trabalho: como decide, se comunica, lida com o ritmo e com regras.</p>
-    <ul class="how">
-      <li>São <b id="nGrupos">24</b> grupos com 4 palavras cada.</li>
-      <li>Em cada grupo, marque a palavra que <b>MAIS</b> combina com você e a que <b>MENOS</b> combina.</li>
-      <li>Pense em como você é no trabalho no dia a dia, não em como gostaria de ser.</li>
-      <li>Não existe resposta certa ou errada. Vá pela primeira impressão.</li>
-      <li>Leva cerca de 10 minutos. Se fechar a página, suas respostas ficam guardadas neste aparelho.</li>
-    </ul>
-    <button type="button" class="btn primary" id="comecar">Começar</button>
-  </section>
+    <p>Este é o seu teste de <b>perfil comportamental DISC</b> da AFLUX. Ele mostra como você costuma agir no trabalho. Não existe resposta certa ou errada e leva cerca de 5 minutos.</p>
+    <p class="small muted"><b>Regras:</b> responda sozinho(a), sem ajuda de outras pessoas, e de preferência sem interrupções.</p>
+    <div class="field"><label for="dNome">Nome completo</label><input id="dNome" name="nome" autocomplete="name" required></div>
+    <div class="field"><label for="dTel">Telefone (com DDD)</label><input id="dTel" name="telefone" type="tel" inputmode="tel" autocomplete="tel" placeholder="(49) 99999-9999" required></div>
+    <p class="err small" id="dErro" hidden></p>
+    <div><button type="submit" class="btn primary">Começar</button></div>
+  </form>
 
-  <section id="tGrupo" class="card" hidden>
-    <div class="prog">
-      <div class="row small"><b id="gNum">Grupo 1 de 24</b><span class="muted" id="gFeito"></span></div>
-      <div class="prog-track"><div class="prog-fill" id="gBarra" style="width:0"></div></div>
-    </div>
-    <div class="legend small muted"><span class="m">Mais combina comigo</span><span class="n">Menos combina comigo</span></div>
-    <div class="words" id="gPalavras"></div>
-    <p class="err small" id="gErro" hidden></p>
-    <div class="row">
-      <button type="button" class="btn link" id="voltar">‹ Voltar</button>
-      <button type="button" class="btn primary" id="avancar" disabled>Próximo</button>
-    </div>
-  </section>
-
-  <section id="tFim" class="card" hidden>
-    <h1>Tudo respondido</h1>
-    <p>Você respondeu todos os grupos. Se quiser revisar alguma resposta, use “Voltar”. Quando estiver tudo certo, clique em <b>Enviar respostas</b>.</p>
-    <p class="err small" id="fErro" hidden></p>
-    <div class="row">
-      <button type="button" class="btn link" id="revisar">‹ Voltar</button>
-      <button type="button" class="btn primary" id="enviar">Enviar respostas</button>
+  <!-- Passos 2 e 3: listas de adjetivos -->
+  <section id="tAdj" class="card" hidden>
+    <div class="prog"><b class="small" id="aPasso">Passo 2 de 3</b><div class="prog-track"><div class="prog-fill" id="aBarra" style="width:66%"></div></div></div>
+    <p class="pergunta" id="aPergunta"></p>
+    <p class="small muted" id="aAjuda"></p>
+    <div class="adjs" id="aLista"></div>
+    <p class="err small" id="aErro" hidden></p>
+    <div class="rodape row">
+      <button type="button" class="btn link" id="aVoltar">‹ Voltar</button>
+      <span class="small muted" id="aConta"></span>
+      <button type="button" class="btn primary" id="aAvancar">Próximo</button>
     </div>
   </section>
 </main>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <script src="config.js?v=2"></script>
-<script src="disc-grupos.js?v=1"></script>
 <script>
 const $ = id => document.getElementById(id);
-const TELAS = ["tCarregando", "tAviso", "tIntro", "tGrupo", "tFim"];
+const TELAS = ["tCarregando", "tAviso", "tDados", "tAdj"];
 const tela = nome => { TELAS.forEach(t => $(t).hidden = t !== nome); window.scrollTo(0, 0); };
-const N = DISC_GRUPOS.length, F4 = "DISC";
+const MINIMO = 5;
+const PASSOS = {
+  sou: { n: 2, pergunta: `Marque as palavras que <mark>mais combinam com você</mark>.`,
+         ajuda: `Pense em como você é no trabalho no dia a dia, não em como gostaria de ser. Marque quantas quiser (pelo menos ${MINIMO}).` },
+  esperam: { n: 3, pergunta: `Agora marque <mark>como as pessoas esperam que você seja</mark> no trabalho.`,
+             ajuda: `Na sua percepção, o que colegas e liderança esperam de você, tendo você essas características ou não. Marque quantas quiser (pelo menos ${MINIMO}).` },
+};
 const token = new URLSearchParams(location.search).get("t") || "";
-const CHAVE = "disc-respostas-" + token;
-let sb, atual = 0;
-let R = { mais: Array(N).fill(null), menos: Array(N).fill(null) };
+const CHAVE = "disc-adj-" + token;
+let sb, PALAVRAS = [], passo = "sou";
+let R = { nome: "", telefone: "", sou: [], esperam: [] };
 
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 function aviso(icone, titulo, texto) {
   $("avisoIcone").textContent = icone; $("avisoTitulo").textContent = titulo; $("avisoTexto").textContent = texto;
   tela("tAviso");
@@ -148,68 +143,65 @@ function aviso(icone, titulo, texto) {
 // Guarda as respostas neste aparelho para não perder se a página fechar
 function guardar() { try { localStorage.setItem(CHAVE, JSON.stringify(R)); } catch (e) {} }
 function recuperar() {
-  try { const r = JSON.parse(localStorage.getItem(CHAVE)); if (r && r.mais?.length === N && r.menos?.length === N) R = r; } catch (e) {}
+  try { const r = JSON.parse(localStorage.getItem(CHAVE)); if (r && Array.isArray(r.sou) && Array.isArray(r.esperam)) R = { ...R, ...r }; } catch (e) {}
 }
-const respondidos = () => R.mais.filter((m, i) => m && R.menos[i]).length;
-
-function mostrarGrupo(gi) {
-  atual = gi;
-  const g = DISC_GRUPOS[gi];
-  $("gNum").textContent = `Grupo ${gi + 1} de ${N}`;
-  $("gFeito").textContent = `${respondidos()} respondido(s)`;
-  $("gBarra").style.width = (respondidos() / N * 100) + "%";
-  $("gErro").hidden = true;
-  $("gPalavras").innerHTML = discOrdem(gi).map(k => {
-    const f = F4[k], m = R.mais[gi] === f, n = R.menos[gi] === f;
-    return `<div class="word ${m ? "is-mais" : n ? "is-menos" : ""}"><b>${g[k]}</b>
-      <button type="button" class="pick m" data-f="${f}" data-tipo="mais" aria-pressed="${m}" aria-label="${g[k]}: mais combina comigo">Mais</button>
-      <button type="button" class="pick n" data-f="${f}" data-tipo="menos" aria-pressed="${n}" aria-label="${g[k]}: menos combina comigo">Menos</button></div>`;
-  }).join("");
-  $("avancar").disabled = !(R.mais[gi] && R.menos[gi]);
-  $("avancar").textContent = gi === N - 1 ? "Concluir" : "Próximo";
-  $("voltar").style.visibility = gi === 0 ? "hidden" : "visible";
-  tela("tGrupo");
+const digitos = s => s.replace(/\D/g, "");
+function mascaraTel(v) {
+  const d = digitos(v).slice(0, 11);
+  if (d.length <= 2) return d.length ? `(${d}` : "";
+  if (d.length <= 6) return `(${d.slice(0, 2)}) ${d.slice(2)}`;
+  if (d.length <= 10) return `(${d.slice(0, 2)}) ${d.slice(2, 6)}-${d.slice(6)}`;
+  return `(${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7)}`;
 }
 
-$("gPalavras").addEventListener("click", e => {
-  const b = e.target.closest(".pick"); if (!b) return;
-  const { f, tipo } = b.dataset, outro = tipo === "mais" ? "menos" : "mais";
-  const antes = !!(R.mais[atual] && R.menos[atual]);
-  R[tipo][atual] = R[tipo][atual] === f ? null : f;
-  // a mesma palavra não pode ser "mais" e "menos" ao mesmo tempo
-  if (R[tipo][atual] === f && R[outro][atual] === f) R[outro][atual] = null;
-  guardar();
-  mostrarGrupo(atual);
-  clearTimeout(avancar._t);
-  // avança sozinho quando o grupo acabou de ficar completo
-  if (!antes && R.mais[atual] && R.menos[atual]) { const gi = atual; avancar._t = setTimeout(() => { if (atual === gi) avancar(); }, 450); }
+$("dTel").addEventListener("input", e => { e.target.value = mascaraTel(e.target.value); });
+$("tDados").addEventListener("submit", e => {
+  e.preventDefault();
+  const nome = $("dNome").value.trim().replace(/\s+/g, " "), tel = $("dTel").value.trim();
+  const erro = nome.split(" ").length < 2 ? "Informe o seu nome completo (nome e sobrenome)."
+    : digitos(tel).length < 10 ? "Informe o telefone com DDD." : "";
+  if (erro) { $("dErro").textContent = erro; $("dErro").hidden = false; return; }
+  $("dErro").hidden = true;
+  R.nome = nome; R.telefone = tel; guardar();
+  mostrarPasso("sou");
 });
 
-function avancar() {
-  if (!(R.mais[atual] && R.menos[atual])) { $("gErro").textContent = "Marque uma palavra em “Mais” e outra em “Menos”."; $("gErro").hidden = false; return; }
-  if (atual < N - 1) return mostrarGrupo(atual + 1);
-  const primeiraFalta = R.mais.findIndex((m, i) => !(m && R.menos[i]));
-  if (primeiraFalta >= 0) return mostrarGrupo(primeiraFalta);
-  tela("tFim");
+function mostrarPasso(p) {
+  passo = p;
+  const cfg = PASSOS[p], marcadas = new Set(R[p]);
+  $("aPasso").textContent = `Passo ${cfg.n} de 3`;
+  $("aBarra").style.width = (cfg.n / 3 * 100) + "%";
+  $("aPergunta").innerHTML = cfg.pergunta;
+  $("aAjuda").textContent = cfg.ajuda;
+  $("aLista").innerHTML = PALAVRAS.map(w => `<button type="button" class="adj" aria-pressed="${marcadas.has(w)}" data-w="${esc(w)}">${esc(w)}</button>`).join("");
+  $("aAvancar").textContent = p === "esperam" ? "Enviar respostas" : "Próximo";
+  $("aErro").hidden = true;
+  contar();
+  tela("tAdj");
 }
-$("avancar").addEventListener("click", () => { clearTimeout(avancar._t); avancar(); });
-$("voltar").addEventListener("click", () => { clearTimeout(avancar._t); if (atual > 0) mostrarGrupo(atual - 1); });
-$("revisar").addEventListener("click", () => mostrarGrupo(N - 1));
-$("comecar").addEventListener("click", () => {
-  const primeiraFalta = R.mais.findIndex((m, i) => !(m && R.menos[i]));
-  primeiraFalta >= 0 ? mostrarGrupo(primeiraFalta) : tela("tFim");
-});
+function contar() { const n = R[passo].length; $("aConta").textContent = n === 1 ? "1 marcada" : `${n} marcadas`; }
 
-$("enviar").addEventListener("click", async () => {
-  const primeiraFalta = R.mais.findIndex((m, i) => !(m && R.menos[i]));
-  if (primeiraFalta >= 0) return mostrarGrupo(primeiraFalta);
-  const btn = $("enviar"); btn.disabled = true; btn.textContent = "Enviando…"; $("fErro").hidden = true;
-  const { error } = await sb.rpc("disc_responder", { t: token, mais: R.mais, menos: R.menos });
+$("aLista").addEventListener("click", e => {
+  const b = e.target.closest(".adj"); if (!b) return;
+  const w = b.dataset.w, lista = R[passo], i = lista.indexOf(w);
+  if (i >= 0) lista.splice(i, 1); else lista.push(w);
+  b.setAttribute("aria-pressed", i < 0);
+  guardar(); contar(); $("aErro").hidden = true;
+});
+$("aVoltar").addEventListener("click", () => {
+  if (passo === "esperam") return mostrarPasso("sou");
+  $("dNome").value = R.nome; $("dTel").value = R.telefone; tela("tDados");
+});
+$("aAvancar").addEventListener("click", async () => {
+  if (R[passo].length < MINIMO) { $("aErro").textContent = `Marque pelo menos ${MINIMO} palavras para continuar.`; $("aErro").hidden = false; return; }
+  if (passo === "sou") return mostrarPasso("esperam");
+  const btn = $("aAvancar"); btn.disabled = true; btn.textContent = "Enviando…";
+  const { error } = await sb.rpc("disc_responder", { t: token, p_nome: R.nome, p_telefone: R.telefone, sou: R.sou, esperam: R.esperam });
   btn.disabled = false; btn.textContent = "Enviar respostas";
   if (error) {
     const msg = error.message || "";
     if (/respondido|expirou|inválido/i.test(msg)) return aviso("!", "Não foi possível enviar", msg);
-    $("fErro").textContent = "Não foi possível enviar agora. Verifique a internet e tente de novo."; $("fErro").hidden = false;
+    $("aErro").textContent = /Marque|Informe/.test(msg) ? msg : "Não foi possível enviar agora. Verifique a internet e tente de novo."; $("aErro").hidden = false;
     return;
   }
   try { localStorage.removeItem(CHAVE); } catch (e) {}
@@ -217,20 +209,21 @@ $("enviar").addEventListener("click", async () => {
 });
 
 (async function iniciar() {
-  $("nGrupos").textContent = N;
   const cfg = window.CONFIG || {};
-  if (!token || !/^[0-9a-f-]{36}$/i.test(token)) return aviso("!", "Link incompleto", "Confira se você abriu o link inteiro que recebeu. Se o problema continuar, peça um novo link ao RH.");
+  if (!/^[0-9a-f-]{36}$/i.test(token)) return aviso("!", "Link incompleto", "Confira se você abriu o link inteiro que recebeu. Se o problema continuar, peça um novo link ao RH.");
   if (!window.supabase || !cfg.SUPABASE_URL) return aviso("!", "Não foi possível abrir o teste", "Tente de novo em alguns minutos.");
   sb = window.supabase.createClient(cfg.SUPABASE_URL, cfg.SUPABASE_ANON_KEY, { auth: { persistSession: false } });
-  const { data, error } = await sb.rpc("disc_convite", { t: token });
-  if (error) return aviso("!", "Não foi possível abrir o teste", "Verifique a internet e tente de novo.");
+  const [conv, adj] = await Promise.all([sb.rpc("disc_convite", { t: token }), sb.from("disc_adjetivos").select("palavra")]);
+  if (conv.error || adj.error) return aviso("!", "Não foi possível abrir o teste", "Verifique a internet e tente de novo.");
+  const data = conv.data;
   if (!data) return aviso("!", "Link inválido", "Este link não existe ou foi cancelado. Peça um novo link ao RH.");
   if (data.situacao === "respondido") return aviso("✓", "Teste já respondido", "Este teste já foi enviado. Obrigado!");
   if (data.situacao === "expirado") return aviso("!", "Link expirado", "O prazo para responder este teste acabou. Peça um novo link ao RH.");
+  PALAVRAS = adj.data.map(x => x.palavra).sort((a, b) => a.localeCompare(b, "pt-BR"));
   $("ola").textContent = data.nome ? `Olá, ${data.nome}!` : "Olá!";
   recuperar();
-  if (respondidos()) $("comecar").textContent = "Continuar de onde parei";
-  tela("tIntro");
+  $("dNome").value = R.nome; $("dTel").value = R.telefone;
+  tela("tDados");
 })();
 </script>
 </body>
