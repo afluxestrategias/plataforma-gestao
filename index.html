@@ -390,19 +390,22 @@ const COMPORTAMENTAIS = [
   ["Liderança", "Capacidade de conduzir os outros a objetivos comuns"],
   ["Senso de urgência", "Reavaliar as prioridades conforme demandas e ligar para o cliente quando necessário"],
 ];
-const CONCEITOS = { E: "Excelente", S: "Satisfatório", R: "Regular", I: "Insatisfatório" };
-const CONCEITO_CLS = { E: "ok", S: "plain", R: "warn", I: "bad" };
-// Nota final de 0 a 10: metade vem da média das competências (1 a 5, vezes 2)
-// e metade da análise comportamental (E = 10, S = 7,5, R = 5, I = 2,5).
+// Escala única das duas análises (competências e comportamental)
+const CONCEITOS = { 1: "Muito abaixo do esperado", 2: "Abaixo do esperado", 3: "Atende ao esperado", 4: "Acima do esperado", 5: "Supera as expectativas" };
+const CONCEITO_CLS = { 1: "bad", 2: "warn", 3: "plain", 4: "ok", 5: "ok" };
+const CONCEITO_COR = { 1: "var(--bad)", 2: "var(--warn)", 3: "var(--muted)", 4: "var(--c)", 5: "var(--good)" };
+const legendaEscala = () => `<p class="small muted">${Object.entries(CONCEITOS).map(([k, t]) => `${k} – ${t}`).join(" · ")}</p>`;
+// a análise comportamental já foi guardada com E/S/R/I; converte essas avaliações para a escala de 1 a 5
+const notaComport = v => ({ E: 5, S: 4, R: 2, I: 1 })[v] ?? (Number(v) || null);
+// Nota final de 0 a 10: média geral (metade competências, metade comportamental, de 1 a 5) vezes 2.
+// O conceito final é o nível da escala mais próximo da média geral.
 // Avaliações sem a parte comportamental usam só as competências.
-const PESO_CONCEITO = { E: 10, S: 7.5, R: 5, I: 2.5 };
 function notaFinal(a) {
   if (!a) return null;
-  const comp = a.media * 2;
-  const vals = Object.values(a.notas?.comportamental || {}).map(k => PESO_CONCEITO[k]).filter(x => x != null);
-  const nota = Math.round((vals.length ? (comp + vals.reduce((s, x) => s + x, 0) / vals.length) / 2 : comp) * 10) / 10;
-  const conceito = nota >= 9 ? "E" : nota >= 7 ? "S" : nota >= 5 ? "R" : "I";
-  return { nota, conceito, comp, comport: vals.length ? vals.reduce((s, x) => s + x, 0) / vals.length : null };
+  const vals = Object.values(a.notas?.comportamental || {}).map(notaComport).filter(Boolean);
+  const comport = vals.length ? vals.reduce((s, x) => s + x, 0) / vals.length : null;
+  const geral = comport == null ? a.media : (a.media + comport) / 2;
+  return { nota: Math.round(geral * 20) / 10, conceito: Math.min(5, Math.max(1, Math.round(geral))), comp: a.media, comport, geral };
 }
 const notaFinalChip = a => { const f = notaFinal(a); return f ? `<span class="score">${fmtNota(f.nota)}</span> <span class="pill ${CONCEITO_CLS[f.conceito]}">${CONCEITOS[f.conceito]}</span>` : `<span class="muted">—</span>`; };
 const TIPOS_FB = ["Reconhecimento", "Construtivo", "Reunião 1:1", "Alinhamento de metas"];
@@ -736,13 +739,13 @@ function formAvaliacao(a = {}, cid) {
       <div class="field"><label for="v-data">Data</label><input type="date" id="v-data" name="data" value="${esc(a.data || hoje())}"></div>
       <div class="field"><label for="v-avaliador">Avaliador</label><input type="text" id="v-avaliador" name="avaliador" value="${esc(a.avaliador ?? me.nome)}"></div>
     </div>
-    <div><h3 class="sec-titulo">Análise de Competências</h3><p class="small muted">1 abaixo do esperado, 3 atende, 5 supera</p>
+    <div><h3 class="sec-titulo">Análise de Competências</h3>${legendaEscala()}
     ${COMPETENCIAS.map(([n, d], i) => `<div class="comp-row"><div><b>${esc(n)}</b><small>${esc(d)}</small></div>
-      <div class="scale" role="radiogroup" aria-label="${esc(n)}">${[1,2,3,4,5].map(v => `<label><input type="radio" name="comp_${i}" value="${v}" ${notas[n] == v ? "checked" : ""}><span>${v}</span></label>`).join("")}</div></div>`).join("")}
+      <div class="scale" role="radiogroup" aria-label="${esc(n)}">${Object.entries(CONCEITOS).map(([k, t]) => `<label title="${t}"><input type="radio" name="comp_${i}" value="${k}" ${notas[n] == k ? "checked" : ""}><span>${k}</span></label>`).join("")}</div></div>`).join("")}
     </div>
-    <div><h3 class="sec-titulo">Análise de Desempenho Comportamental</h3><p class="small muted">E Excelente, S Satisfatório, R Regular, I Insatisfatório</p>
+    <div><h3 class="sec-titulo">Análise de Desempenho Comportamental</h3>${legendaEscala()}
     ${COMPORTAMENTAIS.map(([n, d], i) => `<div class="comp-row"><div><b>${esc(n)}</b>${d ? `<small>${esc(d)}</small>` : ""}</div>
-      <div class="scale" role="radiogroup" aria-label="${esc(n)}">${Object.entries(CONCEITOS).map(([k, t]) => `<label title="${t}"><input type="radio" name="comport_${i}" value="${k}" ${notas.comportamental?.[n] === k ? "checked" : ""}><span>${k}</span></label>`).join("")}</div></div>`).join("")}
+      <div class="scale" role="radiogroup" aria-label="${esc(n)}">${Object.entries(CONCEITOS).map(([k, t]) => `<label title="${t}"><input type="radio" name="comport_${i}" value="${k}" ${notaComport(notas.comportamental?.[n]) == k ? "checked" : ""}><span>${k}</span></label>`).join("")}</div></div>`).join("")}
     </div>
     <div class="form-grid">
       <div class="field full"><label for="v-fortes">Pontos fortes</label><textarea id="v-fortes" name="pontos_fortes">${esc(a.pontos_fortes)}</textarea></div>
@@ -756,7 +759,7 @@ function formAvaliacao(a = {}, cid) {
       for (let i = 0; i < COMPETENCIAS.length; i++) { const v = fd.get("comp_" + i); if (!v) return formErro(`Dê uma nota para “${COMPETENCIAS[i][0]}”.`); n[COMPETENCIAS[i][0]] = Number(v); }
       const media = Math.round(Object.values(n).reduce((s, x) => s + x, 0) / COMPETENCIAS.length * 10) / 10;
       n.comportamental = {};
-      for (let i = 0; i < COMPORTAMENTAIS.length; i++) { const v = fd.get("comport_" + i); if (!v) return formErro(`Marque E, S, R ou I em “${COMPORTAMENTAIS[i][0]}”.`); n.comportamental[COMPORTAMENTAIS[i][0]] = v; }
+      for (let i = 0; i < COMPORTAMENTAIS.length; i++) { const v = fd.get("comport_" + i); if (!v) return formErro(`Dê uma nota para “${COMPORTAMENTAIS[i][0]}”.`); n.comportamental[COMPORTAMENTAIS[i][0]] = Number(v); }
       const rec = { colaborador_id: o.colaborador_id, ciclo: o.ciclo.trim(), data: o.data || hoje(), avaliador: o.avaliador, notas: n, media, pontos_fortes: o.pontos_fortes, desenvolver: o.desenvolver, pdi: o.pdi };
       if (!await save("avaliacoes", a.id, rec)) return false;
       const f = notaFinal(rec);
@@ -1133,10 +1136,10 @@ const VIEWS = {
       ${seletorSetor()}
       <div class="grid-2">
         <section class="panel"><header><h2>Equipe por conceito final</h2><span class="muted small num">${Object.keys(ult).length} pessoa(s)</span></header>
-          ${Object.keys(ult).length ? `<div class="list">${Object.entries(CONCEITOS).map(([k, t]) => `<div class="list-item" style="align-items:flex-start">
-            <span class="pill ${CONCEITO_CLS[k]}" style="min-width:118px;justify-content:center">${t} · ${porConceito[k].length}</span>
+          ${Object.keys(ult).length ? `<div class="list">${Object.entries(CONCEITOS).reverse().map(([k, t]) => `<div class="list-item" style="align-items:flex-start">
+            <span class="pill ${CONCEITO_CLS[k]}" style="min-width:210px;justify-content:center">${k} – ${t} · ${porConceito[k].length}</span>
             <div class="grow members">${porConceito[k].sort((x, y) => notaFinal(y[1]).nota - notaFinal(x[1]).nota).map(([c, a]) => `<button type="button" class="av" style="--h:${hue(c.id)}" title="${esc(c.nome)} · ${fmtNota(notaFinal(a).nota)}" data-action="perfil" data-id="${esc(c.id)}">${esc(iniciais(c.nome))}</button>`).join("") || `<span class="small muted">Ninguém</span>`}</div></div>`).join("")}</div>
-          <p class="small muted" style="margin-top:10px">Nota final: 9 ou mais = Excelente, 7 a 8,9 = Satisfatório, 5 a 6,9 = Regular, abaixo de 5 = Insatisfatório.</p>`
+          <p class="small muted" style="margin-top:10px">O conceito final é o nível mais próximo da média geral das duas análises (competências e comportamental). A nota final de 0 a 10 é essa média vezes 2.</p>`
           : emptyState("Sem avaliações no período", "A equipe aparece aqui depois da primeira avaliação.")}
         </section>
         <section class="panel"><header><h2>Média por competência</h2></header>
@@ -1145,16 +1148,16 @@ const VIEWS = {
         </section>
       </div>
       ${(() => {
-        // distribuição de E/S/R/I por critério, na avaliação mais recente de cada pessoa
+        // distribuição das notas de 1 a 5 por critério, na avaliação mais recente de cada pessoa
         const comAnalise = Object.values(ult).filter(a => a.notas?.comportamental);
         if (!comAnalise.length) return "";
-        const cor = { E: "var(--good)", S: "var(--c)", R: "var(--warn)", I: "var(--bad)" };
         return `<section class="panel"><header><h2>Análise de desempenho comportamental</h2><span class="muted small num">${comAnalise.length} pessoa(s)</span></header>
-          <div class="actions small" style="margin-bottom:8px">${Object.entries(CONCEITOS).map(([k, t]) => `<span><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:${cor[k]};margin-right:4px"></span>${k} ${t}</span>`).join("")}</div>
-          ${COMPORTAMENTAIS.map(([n], i) => { const q = Object.fromEntries(Object.keys(CONCEITOS).map(k => [k, comAnalise.filter(a => a.notas.comportamental[n] === k).length]));
+          <div class="actions small" style="margin-bottom:8px">${Object.entries(CONCEITOS).map(([k, t]) => `<span><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:${CONCEITO_COR[k]};margin-right:4px"></span>${k} – ${t}</span>`).join("")}</div>
+          ${COMPORTAMENTAIS.map(([n]) => { const notas = comAnalise.map(a => notaComport(a.notas.comportamental[n])).filter(Boolean);
+            const q = Object.fromEntries(Object.keys(CONCEITOS).map(k => [k, notas.filter(v => v == k).length]));
             return `<div class="bar-row" style="grid-template-columns:minmax(0,230px) minmax(0,1fr) 90px"><span class="small">${esc(n)}</span>
-              <div class="bar-track" style="display:flex">${Object.keys(CONCEITOS).map(k => q[k] ? `<div title="${q[k]} ${CONCEITOS[k]}" style="width:${q[k] / comAnalise.length * 100}%;background:${cor[k]}"></div>` : "").join("")}</div>
-              <span class="small muted num">${Object.keys(CONCEITOS).map(k => k + q[k]).join(" ")}</span></div>`; }).join("")}
+              <div class="bar-track" style="display:flex">${Object.keys(CONCEITOS).map(k => q[k] ? `<div title="${q[k]} pessoa(s): ${CONCEITOS[k]}" style="width:${q[k] / comAnalise.length * 100}%;background:${CONCEITO_COR[k]}"></div>` : "").join("")}</div>
+              <span class="small muted num">${notas.length ? "média " + fmtNota(notas.reduce((s, x) => s + x, 0) / notas.length) : "—"}</span></div>`; }).join("")}
         </section>`;
       })()}
       <section class="panel"><header><h2>Avaliações registradas</h2></header>
@@ -1305,10 +1308,10 @@ function go(v, id) {
 function resumoComportamental(a) {
   const c = a.notas?.comportamental;
   if (!c) return "";
-  const cont = Object.keys(CONCEITOS).map(k => [k, Object.values(c).filter(v => v === k).length]).filter(([, q]) => q);
+  const cont = Object.keys(CONCEITOS).reverse().map(k => [k, Object.values(c).filter(v => notaComport(v) == k).length]).filter(([, q]) => q);
   return `<div><h3 class="sec-titulo">Análise de Desempenho Comportamental</h3>
     <div class="actions" style="margin-bottom:6px">${cont.map(([k, q]) => `<span class="pill ${CONCEITO_CLS[k]}">${q} ${CONCEITOS[k]}</span>`).join("")}</div>
-    ${COMPORTAMENTAIS.map(([n], i) => `<div class="comp-row"><span>${esc(n)}</span><span class="pill ${CONCEITO_CLS[c[n]] || "plain"}">${c[n] ? c[n] + " · " + CONCEITOS[c[n]] : "—"}</span></div>`).join("")}</div>`;
+    ${COMPORTAMENTAIS.map(([n]) => { const v = notaComport(c[n]); return `<div class="comp-row"><span>${esc(n)}</span><span class="pill ${CONCEITO_CLS[v] || "plain"}">${v ? v + " – " + CONCEITOS[v] : "—"}</span></div>`; }).join("")}</div>`;
 }
 
 function verAvaliacao(a) {
@@ -1317,7 +1320,7 @@ function verAvaliacao(a) {
     body: `<p class="muted small">${fmtData(a.data)}${a.avaliador ? " · avaliado por " + esc(a.avaliador) : ""}</p>
       ${(() => { const f = notaFinal(a); return `<div class="kpi" style="text-align:center"><span>Nota final</span><b>${fmtNota(f.nota)}</b>
         <span><span class="pill ${CONCEITO_CLS[f.conceito]}">${CONCEITOS[f.conceito]}</span></span>
-        <span class="small muted">Competências ${fmtNota(f.comp)}${f.comport != null ? " · Comportamental " + fmtNota(f.comport) : ""} (de 0 a 10)</span></div>`; })()}
+        <span class="small muted">Média das competências ${fmtNota(f.comp)}${f.comport != null ? " · média comportamental " + fmtNota(f.comport) : ""} (de 1 a 5)</span></div>`; })()}
       <div><h3 class="sec-titulo">Análise de Competências</h3>${COMPETENCIAS.map(([n]) => `<div class="comp-row"><b>${esc(n)}</b><span><span class="score">${a.notas?.[n] ?? "—"}</span> ${dots(a.notas?.[n] || 0)}</span></div>`).join("")}
       <div class="comp-row"><b>Média das competências</b><span class="score" style="font-size:1.2rem">${fmtNota(a.media)}</span></div></div>
       ${resumoComportamental(a)}
