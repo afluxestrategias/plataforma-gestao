@@ -323,6 +323,7 @@ dialog form { display: flex; flex-direction: column; max-height: calc(100vh - 40
       <button class="tab" data-action="go" data-view="disc"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 3v18M3 12h18"/></svg>Testes DISC</button>
       <button class="tab" data-action="go" data-view="desempenho"><svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Desempenho</button>
       <button class="tab" data-action="go" data-view="estrutura"><svg viewBox="0 0 24 24"><rect x="9" y="2.5" width="6" height="5" rx="1"/><rect x="2.5" y="16.5" width="6" height="5" rx="1"/><rect x="15.5" y="16.5" width="6" height="5" rx="1"/><path d="M12 7.5V12M5.5 16.5V12h13v4.5"/></svg>Estrutura</button>
+      <button class="tab" data-action="go" data-view="cargos" id="tabCargos" hidden><svg viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2M3 13h18"/></svg>Cargos e salários</button>
       <button class="tab" data-action="go" data-view="feedbacks"><svg viewBox="0 0 24 24"><path d="M20 15a2 2 0 0 1-2 2H8l-4 4V5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2z"/></svg>Feedbacks</button>
       <button class="tab" data-action="go" data-view="usuarios" id="tabUsuarios" hidden><svg viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>Usuários e acessos</button>
     </nav>
@@ -349,7 +350,7 @@ dialog form { display: flex; flex-direction: column; max-height: calc(100vh - 40
 <script>
 const SETORES = { CONTABIL: "Contábil", FISCAL: "Fiscal", DP: "Departamento Pessoal", ATENDIMENTO: "Atendimento" };
 const TABELAS = ["setores", "gestores", "colaboradores", "disc", "avaliacoes", "feedbacks"];
-const S = { setores: [], gestores: [], colaboradores: [], disc: [], avaliacoes: [], feedbacks: [], perfis: [], disc_convites: [], disc_adjetivos: [] };
+const S = { setores: [], gestores: [], colaboradores: [], disc: [], avaliacoes: [], feedbacks: [], perfis: [], disc_convites: [], disc_adjetivos: [], cargos_plano: [], remuneracao: [] };
 let sb = null, me = null, carregado = false;
 let view = "painel", perfilId = null;
 const F = { setor: "", busca: "", status: "", fbColab: "", fbTipo: "", ciclo: "" };
@@ -434,14 +435,17 @@ function aviso(titulo, texto, comSair = true) {
 
 /* ---------- dados ---------- */
 // O banco usa d/i/s/c em minúsculas; a tela usa D/I/S/C
-const doBanco = (t, r) => t === "disc" ? { ...r, D: r.d, I: r.i, S: r.s, C: r.c } : t === "avaliacoes" ? { ...r, media: Number(r.media) } : r;
+const num = x => x == null ? null : Number(x);
+const doBanco = (t, r) => t === "disc" ? { ...r, D: r.d, I: r.i, S: r.s, C: r.c } : t === "avaliacoes" ? { ...r, media: Number(r.media) }
+  : t === "cargos_plano" ? { ...r, salario_min: num(r.salario_min), salario_max: num(r.salario_max) }
+  : t === "remuneracao" ? { ...r, salario_atual: num(r.salario_atual) } : r;
 function erroMsg(e) {
   if (e?.code === "42501" || /row-level security/i.test(e?.message || "")) return "Você não tem permissão para fazer isso.";
   if (e?.code === "23503") return "Esse registro está ligado a outro e não pode ser alterado assim.";
   return "Não foi possível salvar: " + (e?.message || "erro desconhecido") + ".";
 }
 async function carregar(tabelas = TABELAS) {
-  const lista = tabelas !== TABELAS ? tabelas : [...tabelas, "disc_adjetivos", ...(isAdmin() ? ["perfis", "disc_convites"] : [])];
+  const lista = tabelas !== TABELAS ? tabelas : [...tabelas, "disc_adjetivos", ...(isAdmin() ? ["perfis", "disc_convites", "cargos_plano", "remuneracao"] : [])];
   const res = await Promise.all(lista.map(t => sb.from(t).select("*")));
   res.forEach((r, i) => {
     // a lista de adjetivos só existe depois de rodar o disc-adjetivos.sql; sem ela o relatório só não mostra esse gráfico
@@ -482,8 +486,9 @@ async function entrar(user) {
   document.getElementById("meNome").textContent = p.nome || p.email;
   document.getElementById("mePapel").textContent = isAdmin() ? "Administradora · acesso total" : "Gestor · " + setoresVisiveis().map(k => SETORES[k]).join(", ");
   document.getElementById("tabUsuarios").hidden = !isAdmin();
+  document.getElementById("tabCargos").hidden = !isAdmin();
   const inicial = (location.hash || "").slice(1);
-  view = VIEWS[inicial] && inicial !== "perfil" && inicial !== "relatorio" && (inicial !== "usuarios" || isAdmin()) ? inicial : "painel";
+  view = VIEWS[inicial] && inicial !== "perfil" && inicial !== "relatorio" && (!["usuarios", "cargos"].includes(inicial) || isAdmin()) ? inicial : "painel";
   F.setor = setoresVisiveis().length === 1 ? setoresVisiveis()[0] : "";
   tela("telaApp"); render();
   carregar();
@@ -750,6 +755,81 @@ function formFeedback(f = {}, cid) {
       if (!o.colaborador_id || !o.titulo || !o.texto.trim()) return formErro("Preencha colaborador, assunto e o que foi conversado.");
       if (!await save("feedbacks", f.id, o)) return false;
       toast("Feedback salvo");
+    }
+  });
+}
+
+/* ---------- cargos e salários ---------- */
+const brl = v => v == null ? "—" : v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+const valorCampo = v => v == null ? "" : v.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+// aceita "2.500,00", "2500,5" ou "2500.50"
+function lerValor(s) {
+  s = String(s || "").replace(/[^\d,.-]/g, "");
+  if (!s) return null;
+  if (s.includes(",")) s = s.replace(/\./g, "").replace(",", ".");
+  const n = Number(s);
+  return Number.isFinite(n) ? Math.round(n * 100) / 100 : NaN;
+}
+const cargoPlano = id => S.cargos_plano.find(c => c.id === id);
+const remunDe = cid => S.remuneracao.find(r => r.colaborador_id === cid);
+const faixaTxt = cg => !cg || cg.salario_min == null ? "Sem valor definido"
+  : cg.salario_max == null || cg.salario_max === cg.salario_min ? brl(cg.salario_min) : `${brl(cg.salario_min)} a ${brl(cg.salario_max)}`;
+// Compara o salário atual com a faixa do cargo: diferença negativa = falta para chegar ao piso
+function enquadramento(r) {
+  const cg = r && cargoPlano(r.cargo_id);
+  if (!cg) return { sit: "sem-cargo", txt: "Sem cargo no plano", cls: "plain" };
+  if (r.salario_atual == null) return { sit: "sem-salario", txt: "Salário não informado", cls: "plain" };
+  if (cg.salario_min == null) return { sit: "sem-faixa", txt: "Cargo sem valor", cls: "plain" };
+  const teto = cg.salario_max ?? cg.salario_min;
+  if (r.salario_atual < cg.salario_min) return { sit: "abaixo", txt: "Abaixo do plano", cls: "bad", dif: r.salario_atual - cg.salario_min };
+  if (r.salario_atual > teto) return { sit: "acima", txt: "Acima do plano", cls: "warn", dif: r.salario_atual - teto };
+  return { sit: "dentro", txt: "Dentro do plano", cls: "ok", dif: 0 };
+}
+
+function formCargo(cg = {}) {
+  openModal({
+    title: cg.id ? "Editar cargo" : "Novo cargo no plano",
+    body: `<div class="form-grid">
+      <div class="field full"><label class="req" for="cg-nome">Nome do cargo</label><input type="text" id="cg-nome" name="nome" value="${esc(cg.nome)}" placeholder="Ex.: Assistente Contábil/Fiscal I"></div>
+      <div class="field"><label for="cg-nivel">Nível</label><input type="text" id="cg-nivel" name="nivel" value="${esc(cg.nivel)}" placeholder="Ex.: Júnior, Pleno, I, II"></div>
+      <div class="field"><label for="cg-setor">Setor</label><select id="cg-setor" name="setor"><option value="">Qualquer setor</option>${Object.entries(SETORES).map(([k, n]) => `<option value="${k}" ${k === cg.setor ? "selected" : ""}>${n}</option>`).join("")}</select></div>
+      <div class="field"><label for="cg-min">Salário previsto (piso)</label><input type="text" inputmode="decimal" id="cg-min" name="salario_min" value="${valorCampo(cg.salario_min)}" placeholder="Ex.: 2.500,00"></div>
+      <div class="field"><label for="cg-max">Teto da faixa</label><input type="text" inputmode="decimal" id="cg-max" name="salario_max" value="${valorCampo(cg.salario_max)}" placeholder="Deixe em branco se for valor único"></div>
+      <div class="field full"><label for="cg-desc">Descrição das atividades</label><textarea id="cg-desc" name="descricao">${esc(cg.descricao)}</textarea></div>
+      <div class="field full"><label for="cg-req">Requisitos para o cargo</label><textarea id="cg-req" name="requisitos" placeholder="Formação, experiência, conhecimentos…">${esc(cg.requisitos)}</textarea></div>
+    </div>`,
+    handler: async fd => {
+      const o = Object.fromEntries(fd);
+      o.nome = o.nome.trim();
+      if (!o.nome) return formErro("Informe o nome do cargo.");
+      o.salario_min = lerValor(o.salario_min); o.salario_max = lerValor(o.salario_max);
+      if (Number.isNaN(o.salario_min) || Number.isNaN(o.salario_max)) return formErro("Confira os valores. Use o formato 2.500,00.");
+      if (o.salario_min != null && o.salario_max != null && o.salario_max < o.salario_min) return formErro("O teto não pode ser menor que o piso.");
+      if (!await save("cargos_plano", cg.id, o)) return false;
+      toast(cg.id ? "Cargo atualizado" : "Cargo incluído no plano");
+    }
+  });
+}
+
+function formRemuneracao(cid) {
+  const c = colab(cid), r = remunDe(cid) || {};
+  const cargos = [...S.cargos_plano].sort((a, b) => byNome(a, b) || (a.nivel || "").localeCompare(b.nivel || ""));
+  openModal({
+    title: "Cargo e salário · " + c.nome,
+    body: `<div class="form-grid">
+      <div class="field full"><label for="rm-cargo">Cargo no plano</label><select id="rm-cargo" name="cargo_id"><option value="">Sem cargo no plano</option>${cargos.map(cg => `<option value="${esc(cg.id)}" ${cg.id === r.cargo_id ? "selected" : ""}>${esc(cg.nome)}${cg.nivel ? " · " + esc(cg.nivel) : ""} (${esc(faixaTxt(cg))})</option>`).join("")}</select>
+        <small class="muted">Cargo no cadastro: ${esc(c.cargo)}</small></div>
+      <div class="field"><label for="rm-sal">Salário atual</label><input type="text" inputmode="decimal" id="rm-sal" name="salario_atual" value="${valorCampo(r.salario_atual)}" placeholder="Ex.: 2.350,00"></div>
+      <div class="field full"><label for="rm-obs">Observações</label><textarea id="rm-obs" name="observacoes" placeholder="Ex.: próxima revisão em março">${esc(r.observacoes)}</textarea></div>
+    </div>`,
+    handler: async fd => {
+      const salario = lerValor(fd.get("salario_atual"));
+      if (Number.isNaN(salario)) return formErro("Confira o salário. Use o formato 2.350,00.");
+      const { error } = await sb.from("remuneracao").upsert({ colaborador_id: cid, cargo_id: fd.get("cargo_id") || null, salario_atual: salario,
+        observacoes: fd.get("observacoes") || null, atualizado_em: new Date().toISOString() }, { onConflict: "colaborador_id" });
+      if (error) { toast(erroMsg(error), true); return false; }
+      await carregar(["remuneracao"]);
+      toast("Cargo e salário atualizados");
     }
   });
 }
@@ -1103,6 +1183,47 @@ const VIEWS = {
       <div id="lista"></div>`;
   },
 
+  cargos() {
+    if (!isAdmin()) return emptyState("Acesso restrito", "Somente a administradora vê o plano de cargos e salários.");
+    const pessoasAt = ativos().sort(byNome);
+    const linhas = pessoasAt.map(c => { const r = remunDe(c.id); return { c, r, cg: r && cargoPlano(r.cargo_id), e: enquadramento(r) }; });
+    const folha = linhas.reduce((s, l) => s + (l.r?.salario_atual || 0), 0);
+    const abaixo = linhas.filter(l => l.e.sit === "abaixo");
+    const ajuste = abaixo.reduce((s, l) => s - l.e.dif, 0);
+    const pendentes = linhas.filter(l => ["sem-cargo", "sem-salario", "sem-faixa"].includes(l.e.sit)).length;
+    const ocup = id => linhas.filter(l => l.r?.cargo_id === id).length;
+    const cargos = [...S.cargos_plano].filter(cg => !F.setor || !cg.setor || cg.setor === F.setor)
+      .sort((a, b) => byNome(a, b) || (a.nivel || "").localeCompare(b.nivel || ""));
+    return `<div class="head"><div><h1>Cargos e salários</h1><p>Plano de cargos com a faixa salarial prevista e o enquadramento de cada colaborador. Só você vê esta aba.</p></div>
+        <div class="actions"><button type="button" class="btn primary" data-action="new-cargo">Novo cargo</button></div></div>
+      ${seletorSetor()}
+      <div class="kpis">
+        <div class="kpi"><span>Folha atual</span><b class="num" style="font-size:1.35rem">${brl(folha)}</b><span>soma dos salários informados</span></div>
+        <div class="kpi"><span>Abaixo do plano</span><b>${abaixo.length}</b><span>${abaixo.length ? brl(ajuste) + " por mês para enquadrar" : "ninguém abaixo do piso"}</span></div>
+        <div class="kpi"><span>Dentro do plano</span><b>${linhas.filter(l => l.e.sit === "dentro").length}</b><span>de ${linhas.length} pessoas</span></div>
+        <div class="kpi"><span>Pendências</span><b>${pendentes}</b><span>sem cargo, salário ou valor no plano</span></div>
+      </div>
+      <section class="panel"><header><h2>Plano de cargos</h2><span class="muted small">${S.cargos_plano.length} cargo(s)</span></header>
+        ${cargos.length ? `<div class="table-wrap"><table><thead><tr><th>Cargo</th><th>Nível</th><th>Setor</th><th>Salário previsto</th><th>Pessoas</th><th></th></tr></thead><tbody>
+          ${cargos.map(cg => `<tr><td><b>${esc(cg.nome)}</b>${cg.requisitos ? `<br><small class="muted">${esc(cg.requisitos)}</small>` : ""}</td><td>${esc(cg.nivel || "—")}</td>
+            <td>${cg.setor ? `<span class="tag">${esc(SETORES[cg.setor])}</span>` : `<span class="small muted">Qualquer</span>`}</td>
+            <td class="num">${cg.salario_min == null ? `<span class="small" style="color:var(--warn)">Definir valor</span>` : esc(faixaTxt(cg))}</td><td class="num">${ocup(cg.id)}</td>
+            <td><div class="actions"><button type="button" class="btn sm" data-action="edit-cargo" data-id="${esc(cg.id)}">Editar</button><button type="button" class="btn sm danger" data-action="del-cargo" data-id="${esc(cg.id)}">Excluir</button></div></td></tr>`).join("")}
+          </tbody></table></div>` : emptyState("Nenhum cargo no plano", "Cadastre os cargos com o salário previsto de cada um.", `<button type="button" class="btn sm primary" data-action="new-cargo">Novo cargo</button>`)}
+      </section>
+      <section class="panel"><header><h2>Enquadramento por colaborador</h2><span class="muted small">Salário previsto x salário atual</span></header>
+        ${linhas.length ? `<div class="table-wrap"><table><thead><tr><th>Colaborador</th><th>Cargo no plano</th><th>Salário previsto</th><th>Salário atual</th><th>Diferença</th><th>Situação</th><th></th></tr></thead><tbody>
+          ${linhas.map(({ c, r, cg, e }) => `<tr><td><div class="person">${avatar(c)}<div><b>${esc(c.nome)}</b><small>${esc(SETORES[c.setor])}</small></div></div></td>
+            <td>${cg ? esc(cg.nome) + (cg.nivel ? ` <small class="muted">· ${esc(cg.nivel)}</small>` : "") : `<span class="small muted">—</span>`}</td>
+            <td class="num">${cg ? esc(faixaTxt(cg)) : "—"}</td><td class="num"><b>${brl(r?.salario_atual)}</b></td>
+            <td class="num" style="font-weight:700;color:${e.dif < 0 ? "var(--bad)" : e.dif > 0 ? "var(--warn)" : "inherit"}">${e.dif == null ? "—" : e.dif === 0 ? "—" : (e.dif > 0 ? "+" : "−") + brl(Math.abs(e.dif))}</td>
+            <td><span class="pill ${e.cls}">${e.txt}</span></td>
+            <td><button type="button" class="btn sm" data-action="edit-remun" data-id="${esc(c.id)}">Editar</button></td></tr>`).join("")}
+          </tbody></table></div>` : emptyState("Nenhum colaborador ativo", "Cadastre a equipe na aba Colaboradores.")}
+        <p class="small muted" style="margin-top:10px">Diferença em vermelho: quanto falta para o salário chegar ao piso do cargo. Em amarelo: quanto o salário está acima do teto.</p>
+      </section>`;
+  },
+
   usuarios() {
     if (!isAdmin()) return emptyState("Acesso restrito", "Somente administradores gerenciam usuários.");
     const l = [...S.perfis].sort(byNome);
@@ -1236,6 +1357,14 @@ const ACTIONS = {
       async () => { if (!await remove("feedbacks", d.id)) return false; toast("Feedback excluído"); return true; }),
   "new-user": () => formUsuario(),
   "edit-user": d => formUsuario(S.perfis.find(u => u.id === d.id)),
+  "new-cargo": () => formCargo(),
+  "edit-cargo": d => formCargo(cargoPlano(d.id)),
+  "edit-remun": d => formRemuneracao(d.id),
+  "del-cargo": d => {
+    const cg = cargoPlano(d.id), n = S.remuneracao.filter(r => r.cargo_id === cg.id).length;
+    confirmar("Excluir cargo", `<p>Excluir <b>${esc(cg.nome)}</b> do plano?${n ? ` As ${n} pessoa(s) neste cargo ficam sem cargo no plano, mas o salário atual delas é mantido.` : ""}</p>`,
+      "Excluir", async () => { if (!await remove("cargos_plano", cg.id)) return false; await carregar(["remuneracao"]); toast("Cargo excluído"); return true; });
+  },
 };
 document.addEventListener("click", e => {
   const el = e.target.closest("[data-action]");
