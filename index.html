@@ -294,7 +294,9 @@ dialog form { display: flex; flex-direction: column; max-height: calc(100vh - 40
 @media (max-width: 560px) { .ficha { padding: 16px } .fa-dados, .fa-resultado { grid-template-columns: minmax(0, 1fr) } }
 @media print {
   .ficha { border: 0; padding: 0; max-width: none; font-size: 10.5pt } .fa-tab tr, .fa-assinaturas { break-inside: avoid }
-  @page { margin: 14mm }
+  /* margem zero esconde a data e o endereço que o navegador imprime no topo e no rodapé */
+  @page { margin: 0 }
+  main .wrap { padding: 14mm 16mm !important }
 }
 @media print {
   body { background: #fff } .side, .no-print, #toast { display: none !important } .app { display: block }
