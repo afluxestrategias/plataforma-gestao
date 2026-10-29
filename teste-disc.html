@@ -93,9 +93,10 @@ button { font: inherit; color: inherit }
   <!-- Passo 1: dados da pessoa -->
   <form id="tDados" class="card" hidden novalidate>
     <div class="prog"><b class="small">Passo 1 de 3</b><div class="prog-track"><div class="prog-fill" style="width:33%"></div></div></div>
-    <h1 id="ola">Olá!</h1>
-    <p>Este é o seu teste de <b>perfil comportamental DISC</b> da AFLUX. Ele mostra como você costuma agir no trabalho. Não existe resposta certa ou errada e leva cerca de 5 minutos.</p>
-    <p class="small"><b>Regras:</b> Responda sozinho, sem ajuda de terceiros. Não interrompa o questionário com distrações ou conversas.</p>
+    <h1>Conheça seu perfil comportamental!</h1>
+    <p>Este teste tem como objetivo identificar suas principais características e tendências de comportamento, ajudando a compreender melhor como você age, se comunica e se relaciona com as pessoas no dia a dia.</p>
+    <p>Reserve aproximadamente 7 minutos para responder com tranquilidade e sinceridade, sem interrupções.</p>
+    <p>Não existem respostas certas ou erradas! O mais importante é responder de acordo com quem você realmente é. 😊</p>
     <div class="field"><label for="dNome">Nome completo</label><input id="dNome" name="nome" autocomplete="name" required></div>
     <div class="field"><label for="dTel">Telefone (com DDD)</label><input id="dTel" name="telefone" type="tel" inputmode="tel" autocomplete="tel" placeholder="(49) 99999-9999" required></div>
     <p class="err small" id="dErro" hidden></p>
@@ -202,7 +203,7 @@ $("aAvancar").addEventListener("click", async () => {
     return;
   }
   try { localStorage.removeItem(CHAVE); } catch (e) {}
-  aviso("✓", "Respostas enviadas. Obrigado!", "O RH da AFLUX já recebeu o seu teste e vai conversar com você sobre o resultado. Você já pode fechar esta página.");
+  aviso("✓", "O RH da AFLUX já recebeu o seu teste.", "Você já pode fechar esta página.");
 });
 
 (async function iniciar() {
@@ -217,7 +218,6 @@ $("aAvancar").addEventListener("click", async () => {
   if (data.situacao === "respondido") return aviso("✓", "Teste já respondido", "Este teste já foi enviado. Obrigado!");
   if (data.situacao === "expirado") return aviso("!", "Link expirado", "O prazo para responder este teste acabou. Peça um novo link ao RH.");
   PALAVRAS = adj.data.map(x => x.palavra);
-  $("ola").textContent = data.nome ? `Olá, ${data.nome}!` : "Olá!";
   recuperar();
   $("dNome").value = R.nome; $("dTel").value = R.telefone;
   tela("tDados");
