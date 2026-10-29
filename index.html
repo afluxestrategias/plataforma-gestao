@@ -288,8 +288,7 @@ dialog form { display: flex; flex-direction: column; max-height: calc(100vh - 40
 .fa-resultado span { font-size: .72rem; color: #5E6185 } .fa-resultado b { font-size: 1rem; color: #27306A }
 .fa-texto p { white-space: pre-wrap; margin-top: 2px }
 .fa-linhas i { display: block; border-bottom: 1px solid #9aa0c0; height: 22px }
-.fa-data { text-align: center; margin-top: 8px }
-.fa-assinaturas { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 40px; margin-top: 36px; text-align: center }
+.fa-assinaturas { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 40px; margin-top: 48px; text-align: center }
 .fa-assinaturas i { display: block; border-bottom: 1px solid #1B1F45; height: 30px; margin-bottom: 4px }
 .fa-assinaturas small { display: block; color: #5E6185 }
 @media (max-width: 560px) { .ficha { padding: 16px } .fa-dados, .fa-resultado { grid-template-columns: minmax(0, 1fr) } }
@@ -1154,7 +1153,6 @@ const VIEWS = {
         </div>
         ${texto("Pontos fortes", a.pontos_fortes)}${texto("Pontos a desenvolver", a.desenvolver)}
         <div class="fa-texto"><b>Plano de desenvolvimento (PDI) e metas</b>${a.pdi ? `<p>${esc(a.pdi)}</p>` : `<div class="fa-linhas"><i></i><i></i><i></i></div>`}</div>
-        <p class="fa-data">Data: ____/____/________</p>
         <div class="fa-assinaturas">
           <div><i></i><span>Assinatura do(a) colaborador(a)</span><small>${esc(c?.nome || "")}</small></div>
           <div><i></i><span>Assinatura do(a) avaliador(a)</span><small>${esc(a.avaliador || "")}</small></div>
