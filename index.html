@@ -366,6 +366,9 @@ const colab = id => S.colaboradores.find(c => c.id === id);
 const nomeDe = id => colab(id)?.nome || "Colaborador";
 const gestor = id => S.gestores.find(g => g.id === id);
 const liderados = gid => S.colaboradores.filter(c => c.lider_id === gid && c.status !== "Desligado").sort(byNome);
+const subGestores = gid => S.gestores.filter(g => g.superior_id === gid).sort(byNome);
+// Gestores que estão abaixo de gid em qualquer nível (para não deixar a hierarquia virar um ciclo)
+const abaixoDe = gid => { const s = new Set(); const ir = id => subGestores(id).forEach(g => { if (!s.has(g.id)) { s.add(g.id); ir(g.id); } }); ir(gid); return s; };
 const iniciais = n => (n || "?").trim().split(/\s+/).filter(Boolean).map(p => p[0]).slice(0, 2).join("").toUpperCase();
 const hue = s => { let h = 0; for (const ch of String(s)) h = (h * 31 + ch.charCodeAt(0)) % 360; return h; };
 const avatar = (c, cls = "") => `<span class="av ${cls}" style="--h:${hue(c?.id || c?.nome)}" aria-hidden="true">${esc(iniciais(c?.nome))}</span>`;
@@ -550,6 +553,7 @@ function formGestor(g = {}) {
     body: `<div class="form-grid">
       <div class="field full"><label class="req" for="g-nome">Nome</label><input type="text" id="g-nome" name="nome" value="${esc(g.nome)}"></div>
       <div class="field full"><label for="g-cargo">Cargo</label><input type="text" id="g-cargo" name="cargo" value="${esc(g.cargo)}" placeholder="Ex.: Sócia, Coordenadora contábil"></div>
+      <div class="field full"><label for="g-sup">Gestor superior</label><select id="g-sup" name="superior_id"><option value="">Nenhum (topo da estrutura)</option>${(() => { const fora = g.id ? abaixoDe(g.id) : new Set(); return [...S.gestores].filter(x => x.id !== g.id && !fora.has(x.id)).sort(byNome).map(x => `<option value="${esc(x.id)}" ${x.id === g.superior_id ? "selected" : ""}>${esc(x.nome)}</option>`).join(""); })()}</select><small class="muted">A quem este gestor responde diretamente.</small></div>
       <div class="field full"><label for="g-obs">Observações</label><textarea id="g-obs" name="observacoes">${esc(g.observacoes)}</textarea></div>
     </div>`,
     handler: async fd => {
@@ -564,7 +568,15 @@ function formGestor(g = {}) {
 
 function formLiderados(g) {
   const atuais = new Set(liderados(g.id).map(c => c.id));
-  const grupos = Object.entries(SETORES).map(([k, n]) => {
+  const subsAtuais = new Set(subGestores(g.id).map(x => x.id));
+  // Quem está acima de g não pode virar liderado dele
+  const acima = new Set(); for (let p = gestor(g.superior_id); p && !acima.has(p.id); p = gestor(p.superior_id)) acima.add(p.id);
+  const outrosGestores = [...S.gestores].filter(x => x.id !== g.id && !acima.has(x.id)).sort(byNome);
+  const grupoGestores = outrosGestores.length ? `<div><p class="lbl" style="margin-bottom:6px">Gestores</p><div class="checks" style="flex-direction:column;gap:6px">
+      ${outrosGestores.map(x => { const outro = x.superior_id && x.superior_id !== g.id ? gestor(x.superior_id) : null;
+        return `<label><input type="checkbox" name="subgestores" value="${esc(x.id)}" ${subsAtuais.has(x.id) ? "checked" : ""}> ${esc(x.nome)} <span class="muted small">· ${esc(x.cargo || "Gestor")}${outro ? ` · hoje com ${esc(outro.nome)}` : ""}</span></label>`; }).join("")}
+    </div></div>` : "";
+  const grupos = grupoGestores + Object.entries(SETORES).map(([k, n]) => {
     const pessoasSetor = S.colaboradores.filter(c => c.setor === k && c.status !== "Desligado").sort(byNome);
     if (!pessoasSetor.length) return "";
     return `<div><p class="lbl" style="margin-bottom:6px">${n}</p><div class="checks" style="flex-direction:column;gap:6px">
@@ -584,8 +596,15 @@ function formLiderados(g) {
         const { error } = await sb.from("colaboradores").update({ lider_id: valor }).in("id", ids);
         if (error) { toast(erroMsg(error), true); return false; }
       }
-      await carregar(["colaboradores"]);
-      toast(`${sel.size} liderado(s) de ${g.nome}`);
+      const selG = new Set(fd.getAll("subgestores"));
+      const addG = [...selG].filter(id => !subsAtuais.has(id)), remG = [...subsAtuais].filter(id => !selG.has(id));
+      for (const [ids, valor] of [[addG, g.id], [remG, null]]) {
+        if (!ids.length) continue;
+        const { error } = await sb.from("gestores").update({ superior_id: valor }).in("id", ids);
+        if (error) { toast(erroMsg(error), true); return false; }
+      }
+      await carregar(["colaboradores", "gestores"]);
+      toast(`${sel.size + selG.size} liderado(s) de ${g.nome}`);
     }
   });
 }
@@ -975,13 +994,14 @@ const VIEWS = {
     const lista = [...S.gestores].sort(byNome);
     const sem = ativos().filter(c => !gestor(c.lider_id)).sort(byNome);
     const pessoaRow = c => `<div class="list-item" data-action="perfil" data-id="${esc(c.id)}" style="cursor:pointer;padding:8px 0"><div class="grow person">${avatar(c)}<div><b>${esc(c.nome)}</b><small>${esc(c.cargo)}</small></div></div><span class="tag">${esc(SETORES[c.setor])}</span></div>`;
+    const gestorRow = x => `<div class="list-item" style="padding:8px 0"><div class="grow person">${avatar(x)}<div><b>${esc(x.nome)}</b><small>${esc(x.cargo || "Gestor")}</small></div></div><span class="tag">Gestor</span></div>`;
     return `<div class="head"><div><h1>Gestores</h1><p>Quem lidera quem. Cada colaborador tem um gestor direto, e o organograma da aba Estrutura é montado a partir daqui.</p></div>
         ${adm ? `<div class="actions"><button type="button" class="btn primary" data-action="new-gestor">Novo gestor</button></div>` : ""}</div>
       ${seletorSetor()}
-      ${lista.length ? `<div class="areas">${lista.map(g => { const m = liderados(g.id).filter(c => !F.setor || c.setor === F.setor);
-        return `<article class="area"><header><div class="person">${avatar(g, "")}<div><h3>${esc(g.nome)}</h3><small>${esc(g.cargo || "Gestor")}</small></div></div><span class="pill plain num" title="Liderados diretos">${m.length}</span></header>
+      ${lista.length ? `<div class="areas">${lista.map(g => { const m = liderados(g.id).filter(c => !F.setor || c.setor === F.setor), subs = subGestores(g.id), sup = gestor(g.superior_id);
+        return `<article class="area"><header><div class="person">${avatar(g, "")}<div><h3>${esc(g.nome)}</h3><small>${esc(g.cargo || "Gestor")}${sup ? " · responde a " + esc(sup.nome) : ""}</small></div></div><span class="pill plain num" title="Liderados diretos">${subs.length + m.length}</span></header>
           ${g.observacoes ? `<p class="small muted">${esc(g.observacoes)}</p>` : ""}
-          <div class="list">${m.map(pessoaRow).join("") || `<p class="small muted">Nenhum liderado${F.setor ? " neste setor" : " definido"}.</p>`}</div>
+          <div class="list">${subs.map(gestorRow).join("")}${m.map(pessoaRow).join("") || (subs.length ? "" : `<p class="small muted">Nenhum liderado${F.setor ? " neste setor" : " definido"}.</p>`)}</div>
           ${adm ? `<div class="actions"><button type="button" class="btn sm primary" data-action="liderados" data-id="${esc(g.id)}">Definir liderados</button><button type="button" class="btn sm" data-action="edit-gestor" data-id="${esc(g.id)}">Editar</button><button type="button" class="btn sm danger" data-action="del-gestor" data-id="${esc(g.id)}">Excluir</button></div>` : ""}
         </article>`; }).join("")}</div>`
         : `<section class="panel">${emptyState("Nenhum gestor cadastrado", adm ? "Cadastre os gestores e depois marque os liderados diretos de cada um." : "O RH ainda não cadastrou os gestores.", adm ? `<button type="button" class="btn sm primary" data-action="new-gestor">Novo gestor</button>` : "")}</section>`}
@@ -991,9 +1011,17 @@ const VIEWS = {
   estrutura() {
     const vis = ativos();
     const no = c => `<li><span class="node" data-action="perfil" data-id="${esc(c.id)}" role="button" tabindex="0">${avatar(c)}<span><b>${esc(c.nome)}</b> <small>${esc(c.cargo)} · ${esc(SETORES[c.setor])}</small></span></span></li>`;
-    const ramos = [...S.gestores].sort(byNome).map(g => [g, vis.filter(c => c.lider_id === g.id).sort(byNome)]).filter(([, m]) => m.length);
+    // Cada gestor mostra embaixo os gestores que respondem a ele e depois os colaboradores
+    const ramo = (g, vistos) => {
+      if (vistos.has(g.id)) return "";
+      vistos.add(g.id);
+      const subs = subGestores(g.id).map(x => ramo(x, vistos)).filter(Boolean), m = vis.filter(c => c.lider_id === g.id).sort(byNome);
+      if (!subs.length && !m.length) return "";
+      return `<li><span class="node" data-action="go" data-view="gestores" role="button" tabindex="0">${avatar(g)}<span><b>${esc(g.nome)}</b> <small>${esc(g.cargo || "Gestor")} · ${subs.length + m.length} liderado(s)</small></span></span><ul>${subs.join("")}${m.map(no).join("")}</ul></li>`;
+    };
+    const vistos = new Set();
     const semGestor = vis.filter(c => !gestor(c.lider_id)).sort(byNome);
-    const arvore = ramos.map(([g, m]) => `<li><span class="node" data-action="go" data-view="gestores" role="button" tabindex="0">${avatar(g)}<span><b>${esc(g.nome)}</b> <small>${esc(g.cargo || "Gestor")} · ${m.length} liderado(s)</small></span></span><ul>${m.map(no).join("")}</ul></li>`).join("")
+    const arvore = [...S.gestores].filter(g => !gestor(g.superior_id)).sort(byNome).map(g => ramo(g, vistos)).join("")
       + (semGestor.length ? `<li><span class="node" style="cursor:default"><span><b>Sem gestor definido</b> <small>${semGestor.length} pessoa(s)</small></span></span><ul>${semGestor.map(no).join("")}</ul></li>` : "");
     const setores = setoresVisiveis().filter(k => !F.setor || k === F.setor);
     return `<div class="head"><div><h1>Estrutura organizacional</h1><p>Setores da empresa e organograma montado a partir do gestor direto de cada colaborador.</p></div></div>
@@ -1114,7 +1142,7 @@ const ACTIONS = {
   "edit-gestor": d => formGestor(gestor(d.id)),
   "liderados": d => formLiderados(gestor(d.id)),
   "del-gestor": d => {
-    const g = gestor(d.id), n = liderados(g.id).length;
+    const g = gestor(d.id), n = liderados(g.id).length + subGestores(g.id).length;
     confirmar("Excluir gestor", `<p>Excluir <b>${esc(g.nome)}</b> da lista de gestores?${n ? ` Os ${n} liderado(s) ficam sem gestor definido.` : ""} Os colaboradores não são apagados.</p>`,
       "Excluir", async () => { if (!await remove("gestores", g.id)) return false; toast("Gestor excluído"); return true; });
   },
