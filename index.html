@@ -204,6 +204,8 @@ dialog form { display: flex; flex-direction: column; max-height: calc(100vh - 40
 .q-group caption { text-align: left; padding: 8px 12px; background: var(--surface-2); font-size: 0.8rem; font-weight: 700; color: var(--muted) }
 
 .sec-titulo { font-family: var(--display); font-size: 1.5rem; font-weight: 700; color: var(--accent); margin: 18px 0 4px; padding-bottom: 8px; border-bottom: 3px solid transparent; border-image: var(--brand-grad) 1 }
+.legenda-escala { font-size: 0.76rem; letter-spacing: -0.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
+@media (max-width: 760px) { .legenda-escala { white-space: normal } }
 .comp-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--line) }
 .comp-row small { display: block; color: var(--muted) }
 .scale { display: flex; gap: 4px }
@@ -394,7 +396,7 @@ const COMPORTAMENTAIS = [
 const CONCEITOS = { 1: "Muito abaixo do esperado", 2: "Abaixo do esperado", 3: "Atende ao esperado", 4: "Acima do esperado", 5: "Supera as expectativas" };
 const CONCEITO_CLS = { 1: "bad", 2: "warn", 3: "plain", 4: "ok", 5: "ok" };
 const CONCEITO_COR = { 1: "var(--bad)", 2: "var(--warn)", 3: "var(--muted)", 4: "var(--c)", 5: "var(--good)" };
-const legendaEscala = () => `<p class="small muted">${Object.entries(CONCEITOS).map(([k, t]) => `${k} – ${t}`).join(" · ")}</p>`;
+const legendaEscala = () => `<p class="muted legenda-escala">${Object.entries(CONCEITOS).map(([k, t]) => `${k} – ${t}`).join(" · ")}</p>`;
 // a análise comportamental já foi guardada com E/S/R/I; converte essas avaliações para a escala de 1 a 5
 const notaComport = v => ({ E: 5, S: 4, R: 2, I: 1 })[v] ?? (Number(v) || null);
 // Nota final de 0 a 10: média geral (metade competências, metade comportamental, de 1 a 5) vezes 2.
