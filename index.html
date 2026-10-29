@@ -561,7 +561,7 @@ async function entrar(user) {
   document.getElementById("tabUsuarios").hidden = !isAdmin();
   document.getElementById("tabCargos").hidden = !isAdmin();
   const inicial = (location.hash || "").slice(1);
-  view = VIEWS[inicial] && !["perfil", "relatorio", "ficha"].includes(inicial) && (!["usuarios", "cargos"].includes(inicial) || isAdmin()) ? inicial : "painel";
+  view = VIEWS[inicial] && !["perfil", "relatorio", "ficha", "fichafb"].includes(inicial) && (!["usuarios", "cargos"].includes(inicial) || isAdmin()) ? inicial : "painel";
   F.setor = setoresVisiveis().length === 1 ? setoresVisiveis()[0] : "";
   tela("telaApp"); render();
   carregar();
@@ -1118,7 +1118,7 @@ function feedbackCard(f, comNome = true) {
   return `<article class="fb">
     <div class="meta">${comNome ? `<span class="person">${avatar(c)}<b style="color:var(--ink)">${esc(nomeDe(f.colaborador_id))}</b></span>·` : ""}
       <span class="pill tipo-${esc((f.tipo || "").split(" ")[0])}">${esc(f.tipo)}</span><span class="num">${fmtData(f.data)}</span>${f.autor ? `<span>por ${esc(f.autor)}</span>` : ""}
-      ${meus(f) ? `<span style="margin-left:auto" class="actions"><button type="button" class="btn link sm" data-action="edit-feedback" data-id="${esc(f.id)}">Editar</button><button type="button" class="btn link sm danger" data-action="del-feedback" data-id="${esc(f.id)}">Excluir</button></span>` : ""}</div>
+      <span style="margin-left:auto" class="actions"><button type="button" class="btn link sm" data-action="fichafb" data-id="${esc(f.id)}">PDF</button>${meus(f) ? `<button type="button" class="btn link sm" data-action="edit-feedback" data-id="${esc(f.id)}">Editar</button><button type="button" class="btn link sm danger" data-action="del-feedback" data-id="${esc(f.id)}">Excluir</button>` : ""}</span></div>
     <h3>${esc(f.titulo)}</h3>
     <p class="txt">${esc(f.texto)}</p>
     ${f.plano_acao ? `<div class="plan"><span class="eyebrow">Combinados</span><br>${esc(f.plano_acao)}</div>` : ""}
@@ -1257,6 +1257,40 @@ const VIEWS = {
       <section class="panel"><header><h2>Feedbacks</h2><button type="button" class="btn sm primary" data-action="new-feedback" data-id="${esc(c.id)}">Registrar feedback</button></header>
         ${fbs.length ? `<div style="display:flex;flex-direction:column;gap:12px">${fbs.map(f => feedbackCard(f, false)).join("")}</div>` : emptyState("Nenhum feedback salvo", "Registre conversas, reconhecimentos e combinados para manter o histórico.")}
       </section>`;
+  },
+
+  // Ficha do feedback para imprimir e colher as assinaturas
+  fichafb() {
+    const f = S.feedbacks.find(x => x.id === perfilId), c = f && colab(f.colaborador_id);
+    if (!f) return emptyState("Feedback não encontrado", "Volte para a aba Feedbacks e abra o feedback de novo.");
+    // evidências dos 90 dias anteriores ao feedback
+    const ev = evidenciasDe(f.colaborador_id, new Date(new Date(f.data) - 90 * 864e5).toISOString().slice(0, 10), f.data);
+    const bloco = (rotulo, t) => t ? `<div class="fa-texto"><b>${rotulo}</b><p>${esc(t)}</p></div>` : "";
+    return `<div class="head no-print"><div><button type="button" class="btn link" data-action="go" data-view="feedbacks">← Feedbacks</button></div>
+        <div class="actions"><button type="button" class="btn primary" data-action="imprimir">Imprimir / salvar PDF</button></div></div>
+      <article class="ficha">
+        <header class="fa-topo"><img src="logo.png" alt="AFLUX Estratégia Financeira Contábil" class="rel-logo"></header>
+        <h1 class="fa-titulo">Registro de Feedback</h1>
+        <div class="fa-dados">
+          <div><span>Colaborador(a)</span><b>${esc(c?.nome || "—")}</b></div>
+          <div><span>Cargo</span><b>${esc(c?.cargo || "—")}</b></div>
+          <div><span>Setor</span><b>${esc(SETORES[c?.setor] || "—")}</b></div>
+          <div><span>Tipo</span><b>${esc(f.tipo || "—")}</b></div>
+          <div><span>Quem deu o feedback</span><b>${esc(f.autor || "—")}</b></div>
+          <div><span>Data</span><b>${fmtData(f.data)}</b></div>
+        </div>
+        ${bloco("Assunto", f.titulo)}
+        ${bloco("O que foi conversado", f.texto)}
+        ${bloco("Combinados e plano de ação", f.plano_acao)}
+        ${f.proximo ? `<p><b>Próximo acompanhamento:</b> ${fmtData(f.proximo)}</p>` : ""}
+        ${ev.length ? `<table class="fa-tab"><thead><tr><th colspan="4">Evidências do período (${ev.length})</th></tr></thead><tbody>
+          ${ev.map(e => `<tr><td style="width:84px">${fmtData(e.data)}</td><td style="width:80px;font-weight:700;color:${e.tipo === "positiva" ? "#2E8B57" : "#C0392B"}">${e.tipo === "positiva" ? "Positiva" : "Negativa"}</td><td style="width:170px">${esc(e.criterio)}</td><td><b>${esc(e.titulo)}</b>${e.descricao ? ` · ${esc(e.descricao)}` : ""}</td></tr>`).join("")}
+          </tbody></table>` : ""}
+        <div class="fa-assinaturas">
+          <div><i></i><span>Assinatura do(a) colaborador(a)</span><small>${esc(c?.nome || "")}</small></div>
+          <div><i></i><span>Assinatura de quem deu o feedback</span><small>${esc(f.autor || "")}</small></div>
+        </div>
+      </article>`;
   },
 
   // Ficha da avaliação de desempenho para imprimir e colher as assinaturas
@@ -1500,7 +1534,7 @@ function renderLista() {
 }
 function render() {
   if (!me) return;
-  const aba = view === "perfil" ? "colaboradores" : view === "relatorio" ? "disc" : view === "ficha" ? "desempenho" : view;
+  const aba = view === "perfil" ? "colaboradores" : view === "relatorio" ? "disc" : view === "ficha" ? "desempenho" : view === "fichafb" ? "feedbacks" : view;
   document.querySelectorAll("#tabs .tab").forEach(t => t.dataset.view === aba ? t.setAttribute("aria-current", "page") : t.removeAttribute("aria-current"));
   const v = document.getElementById("view");
   if (!carregado) { v.innerHTML = `<div class="empty"><b>Carregando dados…</b><span>Buscando colaboradores, testes e avaliações.</span></div>`; return; }
@@ -1511,7 +1545,7 @@ function render() {
 }
 function go(v, id) {
   view = v; perfilId = id || null;
-  try { history.replaceState(null, "", ["perfil", "relatorio", "ficha"].includes(v) ? location.pathname : "#" + v); } catch (e) {}
+  try { history.replaceState(null, "", ["perfil", "relatorio", "ficha", "fichafb"].includes(v) ? location.pathname : "#" + v); } catch (e) {}
   render(); window.scrollTo(0, 0);
 }
 
@@ -1592,6 +1626,7 @@ const ACTIONS = {
   "ver-aval": d => verAvaliacao(S.avaliacoes.find(a => a.id === d.id)),
   "relatorio": d => go("relatorio", d.id),
   "ficha": d => { closeModal(); go("ficha", d.id); },
+  "fichafb": d => { closeModal(); go("fichafb", d.id); },
   "imprimir": () => window.print(),
   "del-aval": d => confirmar("Excluir avaliação", `<p>Excluir esta avaliação de desempenho? Isso não pode ser desfeito.</p>`, "Excluir",
       async () => { if (!await remove("avaliacoes", d.id)) return false; toast("Avaliação excluída"); return true; }),
