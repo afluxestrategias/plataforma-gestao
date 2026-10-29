@@ -884,6 +884,47 @@ function evidenciasNoFeedback() {
 }
 document.addEventListener("change", e => { if (e.target.matches("#b-colab, #ev-de, #ev-ate")) evidenciasNoFeedback(); });
 
+// Texto pronto para colar no Claude (claude.ai). Vai só o primeiro nome da pessoa, sem sobrenome.
+function pedidoFeedbackIA(o, de, ate) {
+  const c = colab(o.colaborador_id), primeiro = (c?.nome || "").split(" ")[0];
+  const ev = evidenciasDe(o.colaborador_id, de, ate);
+  const d = ultimoDisc(o.colaborador_id), av = ultimaAval(o.colaborador_id);
+  const linhaEv = e => `- [${e.tipo === "positiva" ? "POSITIVA" : "NEGATIVA"}] ${fmtData(e.data)} · ${e.criterio}: ${e.titulo}${e.descricao ? ". " + e.descricao : ""}${e.cliente ? ` (cliente: ${e.cliente})` : ""}`;
+  return [
+    "Você é uma especialista em RH ajudando a preparar uma conversa de feedback em um escritório de contabilidade (AFLUX Estratégia Financeira Contábil).",
+    "",
+    `Colaborador(a): ${primeiro}`,
+    `Cargo: ${c?.cargo || "—"} · Setor: ${SETORES[c?.setor] || "—"}`,
+    `Tipo de feedback: ${o.tipo || "—"} · Data: ${fmtData(o.data)}`,
+    d ? `Perfil comportamental (DISC): ${d.perfil.split("").map(f => FACTORS[f].nome).join(" com traços de ")}. Dica de condução para este perfil: ${FACTORS[d.perfil[0]].liderar}` : "",
+    av ? `Última avaliação de desempenho (${av.ciclo}): nota final ${fmtNota(notaFinal(av).nota)} de 10, ${CONCEITOS[notaFinal(av).conceito]}.` : "",
+    "",
+    `Evidências do período (${fmtData(de)} a ${fmtData(ate)}):`,
+    ev.length ? ev.map(linhaEv).join("\n") : "- Nenhuma evidência registrada no período.",
+    "",
+    o.titulo ? `Assunto já definido: ${o.titulo}` : "",
+    o.texto ? `Anotações já feitas sobre a conversa: ${o.texto}` : "",
+    o.plano_acao ? `Combinados já pensados: ${o.plano_acao}` : "",
+    "",
+    `Monte um modelo de feedback em português, com linguagem respeitosa, direta e baseada nos fatos acima${d ? ", adaptada ao perfil comportamental da pessoa" : ""}. Reconheça os pontos positivos com exemplos e trate os negativos como oportunidade de desenvolvimento, sem julgamentos. Responda exatamente nestas três partes, para eu colar no sistema:`,
+    "",
+    "ASSUNTO: (uma frase curta)",
+    "O QUE FOI CONVERSADO: (contexto da conversa, fatos observados com exemplos das evidências e os alinhamentos sobre o que se espera daqui para frente)",
+    "COMBINADOS E PLANO DE AÇÃO: (de 2 a 4 ações práticas, com prazo sugerido)",
+    "",
+    `Depois, em poucas linhas, dê 3 dicas de como conduzir essa conversa${d ? " com esse perfil" : ""}.`,
+  ].filter((l, i, a) => l !== "" || a[i - 1] !== "").join("\n");
+}
+function copiarTexto(texto) {
+  // cópia síncrona primeiro, para o navegador permitir abrir o Claude logo em seguida
+  const t = document.createElement("textarea"); t.value = texto; t.style.position = "fixed"; t.style.opacity = "0";
+  (modal.open ? modal : document.body).append(t); t.select();
+  let ok = false; try { ok = document.execCommand("copy"); } catch (e) {}
+  t.remove();
+  if (!ok && navigator.clipboard) navigator.clipboard.writeText(texto).catch(() => {});
+  return ok;
+}
+
 function formFeedback(f = {}, cid) {
   if (!pessoas().length) return toast("Não há colaboradores no seu escopo.", true);
   formFeedback.atual = f;
@@ -902,6 +943,8 @@ function formFeedback(f = {}, cid) {
     <aside class="fb-ev">
       <div class="ev-periodo"><label>De <input type="date" id="ev-de" name="_de" value="${esc(f._de || diasAtras(90))}"></label><label>Até <input type="date" id="ev-ate" name="_ate" value="${esc(f._ate || f.data || hoje())}"></label></div>
       <div id="ev-feedback"></div>
+      <button type="button" class="btn primary" data-action="ia-feedback">Montar pedido para o Claude</button>
+      <p class="small muted">Copia um pedido com as evidências e o que já foi escrito e abre o Claude. Lá, aperte Ctrl+V e envie.</p>
     </aside></div>`,
     handler: async fd => {
       const o = Object.fromEntries(fd);
@@ -1559,6 +1602,13 @@ const ACTIONS = {
     const e = S.evidencias.find(x => x.id === d.id);
     confirmar("Excluir evidência", `<p>Excluir a evidência <b>${esc(e.titulo)}</b> de ${esc(nomeDe(e.colaborador_id))}?</p>`,
       "Excluir", async () => { if (!await remove("evidencias", e.id)) return false; toast("Evidência excluída"); return true; });
+  },
+  "ia-feedback": () => {
+    const o = Object.fromEntries(new FormData(mForm));
+    if (!o.colaborador_id) return formErro("Escolha o colaborador antes de montar o pedido.");
+    copiarTexto(pedidoFeedbackIA(o, o._de, o._ate));
+    window.open("https://claude.ai/new", "_blank", "noopener");
+    toast("Pedido copiado. No Claude, aperte Ctrl+V e envie. Depois copie a resposta para cá.");
   },
   // dentro do feedback: guarda o que já foi digitado, abre a evidência e depois volta ao feedback
   "evid-do-feedback": () => {
