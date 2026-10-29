@@ -238,6 +238,47 @@ dialog form { display: flex; flex-direction: column; max-height: calc(100vh - 40
   .comp-row { grid-template-columns: minmax(0, 1fr) }
   .bar-row { grid-template-columns: 84px minmax(0, 1fr) 34px }
 }
+/* relatório comportamental */
+.relatorio { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 28px; display: flex; flex-direction: column; gap: 22px; max-width: 900px }
+.rel-capa { display: flex; gap: 20px; align-items: center; padding-bottom: 18px; border-bottom: 4px solid transparent; border-image: var(--brand-grad) 1 }
+.rel-logo { width: 140px; height: auto; border-radius: 8px }
+@media (prefers-color-scheme: dark) { .rel-logo { background: #fff; padding: 6px 8px } }
+.rel-capa h1 { font-size: 1.7rem }
+.rel-muted { color: var(--muted); font-size: .9rem }
+.rel-bloco { display: flex; flex-direction: column; gap: 14px }
+.rel-bloco > h2 { font-size: 1.2rem; color: var(--accent) }
+.rel-centro { text-align: center; align-items: center }
+.rel-titulo { font-size: 2rem; color: var(--accent) }
+.rel-barra { display: flex; width: 100%; height: 30px; border-radius: 15px; overflow: hidden }
+.rel-barra > div { display: flex; align-items: center; justify-content: center }
+.rel-barra i { width: 14px; height: 14px; border-radius: 50%; background: #fff }
+.rel-fatores { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; width: 100% }
+.rel-fatores > div { display: flex; flex-direction: column; align-items: center }
+.rel-fatores b { font-size: 1.15rem; font-variant-numeric: tabular-nums } .rel-fatores span { font-size: 1.05rem } .rel-fatores small { font-weight: 700; font-size: .72rem }
+.rel-sec h3 { font-size: 1rem; color: var(--accent); text-transform: uppercase; letter-spacing: .02em; margin-bottom: 4px }
+.rel-alerta { background: var(--surface-2); border-radius: 8px; padding: 10px 14px; font-size: .9rem }
+.rel-ind { display: flex; flex-direction: column; gap: 4px }
+.rel-ind-top { display: flex; justify-content: space-between; gap: 10px } .rel-ind-top span { font-size: .75rem; font-weight: 700; color: var(--accent) }
+.rel-ind p { color: var(--muted); font-size: .85rem }
+.rel-track { height: 8px; border-radius: 4px; background: var(--surface-2); overflow: hidden } .rel-track > div { height: 100%; background: var(--accent); border-radius: 4px }
+.rel-grade { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 28px }
+.rel-comp { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; align-items: end }
+.rel-comp-col { display: flex; flex-direction: column; align-items: center; gap: 4px }
+.rel-comp-bars { display: flex; gap: 6px; align-items: flex-end; height: 140px; width: 100%; justify-content: center; border-bottom: 1px solid var(--line) }
+.rel-comp-bars > div { width: 28px; border-radius: 4px 4px 0 0; min-height: 2px }
+.rel-adapt { opacity: .4; background-image: repeating-linear-gradient(45deg, transparent 0 4px, rgba(255,255,255,.5) 4px 8px) }
+.rel-leg { display: inline-block; width: 12px; height: 12px; border-radius: 3px; background: var(--accent); vertical-align: -1px; margin-left: 8px }
+.rel-rodape { border-top: 1px solid var(--line); padding-top: 12px; font-size: .8rem }
+@media (max-width: 560px) { .relatorio { padding: 18px } .rel-capa { flex-direction: column; align-items: flex-start } .rel-grade { grid-template-columns: minmax(0, 1fr) } .rel-fatores { grid-template-columns: repeat(2, minmax(0, 1fr)) } }
+@media print {
+  body { background: #fff } .side, .no-print, #toast { display: none !important } .app { display: block }
+  main .wrap { padding: 0; max-width: none } .relatorio { border: 0; padding: 0; max-width: none }
+  .rel-bloco { break-inside: avoid-page } .rel-sec, .rel-ind { break-inside: avoid }
+  * { -webkit-print-color-adjust: exact; print-color-adjust: exact }
+  :root, :root:not([data-theme="light"]) { --bg: #fff; --surface: #fff; --surface-2: #ECEDF4; --ink: #1B1F45; --muted: #5E6185; --line: #DCDDEA;
+    --accent: #27306A; --d: #D04545; --i: #D99A0B; --s: #3A9657; --c: #2E6CB5; color-scheme: light }
+  .rel-logo { background: none; padding: 0 }
+}
 </style>
 </head>
 <body>
@@ -298,6 +339,7 @@ dialog form { display: flex; flex-direction: column; max-height: calc(100vh - 40
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <script src="config.js?v=2"></script>
+<script src="relatorio-disc.js?v=1"></script>
 <script>
 const SETORES = { CONTABIL: "Contábil", FISCAL: "Fiscal", DP: "Departamento Pessoal", ATENDIMENTO: "Atendimento" };
 const TABELAS = ["setores", "gestores", "colaboradores", "disc", "avaliacoes", "feedbacks"];
@@ -369,10 +411,8 @@ const colabOptions = (sel, incluirVazio = true, excluir) => (incluirVazio ? `<op
   [...pessoas()].sort(byNome).filter(c => c.id !== excluir).map(c => `<option value="${esc(c.id)}" ${c.id === sel ? "selected" : ""}>${esc(c.nome)}</option>`).join("");
 const vazioParaNull = o => { const r = {}; for (const [k, v] of Object.entries(o)) r[k] = v === "" ? null : v; return r; };
 
-function perfilDe(v) {
-  const ord = Object.entries(v).sort((a, b) => b[1] - a[1]);
-  return ord[0][0] + (ord[1][1] >= ord[0][1] - 12 && ord[1][1] >= 55 ? ord[1][0] : "");
-}
+// fator principal e, se tiver 25% ou mais do total, o segundo (mesma regra do relatório)
+const perfilDe = v => perfilPorPartes(v);
 function toast(msg, err = false) {
   const t = document.getElementById("toast");
   t.textContent = msg; t.className = err ? "err" : ""; t.hidden = false;
@@ -436,7 +476,7 @@ async function entrar(user) {
   document.getElementById("mePapel").textContent = isAdmin() ? "Administradora · acesso total" : "Gestor · " + setoresVisiveis().map(k => SETORES[k]).join(", ");
   document.getElementById("tabUsuarios").hidden = !isAdmin();
   const inicial = (location.hash || "").slice(1);
-  view = VIEWS[inicial] && inicial !== "perfil" && (inicial !== "usuarios" || isAdmin()) ? inicial : "painel";
+  view = VIEWS[inicial] && inicial !== "perfil" && inicial !== "relatorio" && (inicial !== "usuarios" || isAdmin()) ? inicial : "painel";
   F.setor = setoresVisiveis().length === 1 ? setoresVisiveis()[0] : "";
   tela("telaApp"); render();
   carregar();
@@ -911,7 +951,8 @@ const VIEWS = {
       </section>
       <div class="grid-2">
         <section class="panel"><header><h2>Perfil DISC</h2>${adm ? `<div class="actions"><button type="button" class="btn sm" data-action="disc-teste" data-id="${esc(c.id)}">Aplicar teste</button><button type="button" class="btn sm" data-action="disc-externo" data-id="${esc(c.id)}">Lançar resultado</button></div>` : ""}</header>
-          ${d ? `${discBars(d)}
+          ${d ? `<div style="margin-bottom:12px"><button type="button" class="btn sm primary" data-action="relatorio" data-id="${esc(d.id)}">Ver relatório comportamental</button></div>
+            ${discBars(d)}
             <p style="margin-top:14px"><b class="t-${d.perfil[0]}">${FACTORS[d.perfil[0]].nome}</b>${d.perfil[1] ? ` com traços de <b class="t-${d.perfil[1]}">${FACTORS[d.perfil[1]].nome}</b>` : ""}. ${esc(FACTORS[d.perfil[0]].resumo)}</p>
             <p class="small" style="margin-top:8px"><b>Como liderar:</b> ${esc(FACTORS[d.perfil[0]].liderar)}</p>
             <p class="small muted" style="margin-top:8px">${esc(d.origem)} · <span class="num">${fmtData(d.data)}</span>${adm && d.respostas?.nome ? ` · respondido por ${esc(d.respostas.nome)}${d.respostas.telefone ? " · " + esc(d.respostas.telefone) : ""}` : ""}</p>
@@ -930,6 +971,14 @@ const VIEWS = {
       <section class="panel"><header><h2>Feedbacks</h2><button type="button" class="btn sm primary" data-action="new-feedback" data-id="${esc(c.id)}">Registrar feedback</button></header>
         ${fbs.length ? `<div style="display:flex;flex-direction:column;gap:12px">${fbs.map(f => feedbackCard(f, false)).join("")}</div>` : emptyState("Nenhum feedback salvo", "Registre conversas, reconhecimentos e combinados para manter o histórico.")}
       </section>`;
+  },
+
+  relatorio() {
+    const d = S.disc.find(x => x.id === perfilId), c = d && colab(d.colaborador_id);
+    if (!d) return emptyState("Relatório não encontrado", "Volte para a aba Testes DISC e abra o relatório de novo.");
+    return `<div class="head no-print"><div><button type="button" class="btn link" data-action="perfil" data-id="${esc(d.colaborador_id)}">← ${esc(c?.nome || "Voltar")}</button></div>
+        <div class="actions"><button type="button" class="btn primary" data-action="imprimir">Imprimir / salvar PDF</button></div></div>
+      ${relatorioDisc(d, c, esc)}`;
   },
 
   disc() {
@@ -1095,7 +1144,7 @@ function renderLista() {
 }
 function render() {
   if (!me) return;
-  const aba = view === "perfil" ? "colaboradores" : view;
+  const aba = view === "perfil" ? "colaboradores" : view === "relatorio" ? "disc" : view;
   document.querySelectorAll("#tabs .tab").forEach(t => t.dataset.view === aba ? t.setAttribute("aria-current", "page") : t.removeAttribute("aria-current"));
   const v = document.getElementById("view");
   if (!carregado) { v.innerHTML = `<div class="empty"><b>Carregando dados…</b><span>Buscando colaboradores, testes e avaliações.</span></div>`; return; }
@@ -1106,7 +1155,7 @@ function render() {
 }
 function go(v, id) {
   view = v; perfilId = id || null;
-  try { history.replaceState(null, "", v === "perfil" ? location.pathname : "#" + v); } catch (e) {}
+  try { history.replaceState(null, "", v === "perfil" || v === "relatorio" ? location.pathname : "#" + v); } catch (e) {}
   render(); window.scrollTo(0, 0);
 }
 
@@ -1170,6 +1219,8 @@ const ACTIONS = {
   "new-aval": d => formAvaliacao({}, d.id),
   "edit-aval": d => formAvaliacao(S.avaliacoes.find(a => a.id === d.id)),
   "ver-aval": d => verAvaliacao(S.avaliacoes.find(a => a.id === d.id)),
+  "relatorio": d => go("relatorio", d.id),
+  "imprimir": () => window.print(),
   "del-aval": d => confirmar("Excluir avaliação", `<p>Excluir esta avaliação de desempenho? Isso não pode ser desfeito.</p>`, "Excluir",
       async () => { if (!await remove("avaliacoes", d.id)) return false; toast("Avaliação excluída"); return true; }),
   "new-feedback": d => formFeedback({}, d.id),
