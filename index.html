@@ -166,14 +166,7 @@ tr.click:hover td { background: var(--surface-2) }
 .factor .letter { font-family: var(--display); font-size: 1.9rem; font-weight: 700; line-height: 1 }
 .factor ul { margin: 0; padding-left: 18px; font-size: 0.86rem; color: var(--muted) }
 
-.ninebox { display: grid; grid-template-columns: 26px repeat(3, minmax(0, 1fr)); grid-template-rows: repeat(3, minmax(96px, auto)) 26px; gap: 6px }
-.nb-cell { background: var(--surface-2); border-radius: 8px; padding: 8px 10px; display: flex; flex-direction: column; gap: 6px; min-width: 0 }
-.nb-cell.hot { background: var(--accent-soft) }
-.nb-cell .nb-t { font-size: 0.74rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em }
-.nb-people { display: flex; flex-wrap: wrap; gap: 4px }
-.nb-people .av, .members .av { width: 28px; height: 28px; font-size: 0.68rem; cursor: pointer; border: 0 }
-.nb-axis { font-size: 0.72rem; color: var(--muted); font-weight: 700; display: grid; place-items: center; text-transform: uppercase; letter-spacing: 0.05em }
-.nb-axis.v { writing-mode: vertical-rl; transform: rotate(180deg) }
+.members .av { width: 28px; height: 28px; font-size: 0.68rem; cursor: pointer; border: 0 }
 
 .score { font-family: var(--display); font-weight: 600; font-variant-numeric: tabular-nums }
 .dots { display: inline-flex; gap: 3px; vertical-align: middle }
@@ -411,7 +404,6 @@ function notaFinal(a) {
   return { nota, conceito, comp, comport: vals.length ? vals.reduce((s, x) => s + x, 0) / vals.length : null };
 }
 const notaFinalChip = a => { const f = notaFinal(a); return f ? `<span class="score">${fmtNota(f.nota)}</span> <span class="pill ${CONCEITO_CLS[f.conceito]}">${CONCEITOS[f.conceito]}</span>` : `<span class="muted">—</span>`; };
-const NINE = { alto: ["Enigma", "Em crescimento", "Estrela"], medio: ["Dilema", "Mantenedor", "Alto desempenho"], baixo: ["Insuficiente", "Eficaz", "Comprometido"] };
 const TIPOS_FB = ["Reconhecimento", "Construtivo", "Reunião 1:1", "Alinhamento de metas"];
 const STATUS = ["Ativo", "Férias", "Afastado", "Desligado"];
 const CONTRATOS = ["CLT", "PJ", "Estágio", "Temporário", "Aprendiz"];
@@ -444,8 +436,6 @@ const ultimaAval = cid => S.avaliacoes.filter(a => a.colaborador_id === cid).sor
 const ativos = () => pessoas().filter(c => c.status !== "Desligado");
 const statusPill = s => `<span class="pill ${s === "Ativo" ? "ok" : s === "Desligado" ? "bad" : "warn"}">${esc(s || "Ativo")}</span>`;
 const discChip = d => d ? `<span class="disc-chip" title="Perfil ${esc(d.perfil)}">${d.perfil.split("").map(f => `<span class="f-${f}">${f}</span>`).join("")}</span>` : `<span class="muted small">Sem teste</span>`;
-const nivel = m => m < 3 ? 0 : m < 4 ? 1 : 2;
-const potIdx = p => ({ Baixo: 0, Médio: 1, Alto: 2 }[p] ?? 1);
 const dots = n => `<span class="dots">${[1,2,3,4,5].map(i => `<i class="${i <= Math.round(n) ? "on" : ""}"></i>`).join("")}</span>`;
 const colabOptions = (sel, incluirVazio = true, excluir) => (incluirVazio ? `<option value="">Selecione…</option>` : "") +
   [...pessoas()].sort(byNome).filter(c => c.id !== excluir).map(c => `<option value="${esc(c.id)}" ${c.id === sel ? "selected" : ""}>${esc(c.nome)}</option>`).join("");
@@ -754,7 +744,6 @@ function formAvaliacao(a = {}, cid) {
       <div class="scale" role="radiogroup" aria-label="${esc(n)}">${Object.entries(CONCEITOS).map(([k, t]) => `<label title="${t}"><input type="radio" name="comport_${i}" value="${k}" ${notas.comportamental?.[n] === k ? "checked" : ""}><span>${k}</span></label>`).join("")}</div></div>`).join("")}
     </div>
     <div class="form-grid">
-      <div class="field"><label class="req" for="v-pot">Potencial</label><select id="v-pot" name="potencial">${["Baixo", "Médio", "Alto"].map(p => `<option ${p === (a.potencial || "Médio") ? "selected" : ""}>${p}</option>`).join("")}</select></div>
       <div class="field full"><label for="v-fortes">Pontos fortes</label><textarea id="v-fortes" name="pontos_fortes">${esc(a.pontos_fortes)}</textarea></div>
       <div class="field full"><label for="v-desenv">Pontos a desenvolver</label><textarea id="v-desenv" name="desenvolver">${esc(a.desenvolver)}</textarea></div>
       <div class="field full"><label for="v-pdi">Plano de desenvolvimento (PDI) e metas</label><textarea id="v-pdi" name="pdi">${esc(a.pdi)}</textarea></div>
@@ -767,7 +756,7 @@ function formAvaliacao(a = {}, cid) {
       const media = Math.round(Object.values(n).reduce((s, x) => s + x, 0) / COMPETENCIAS.length * 10) / 10;
       n.comportamental = {};
       for (let i = 0; i < COMPORTAMENTAIS.length; i++) { const v = fd.get("comport_" + i); if (!v) return formErro(`Marque E, S, R ou I em “${COMPORTAMENTAIS[i][0]}”.`); n.comportamental[COMPORTAMENTAIS[i][0]] = v; }
-      const rec = { colaborador_id: o.colaborador_id, ciclo: o.ciclo.trim(), data: o.data || hoje(), avaliador: o.avaliador, notas: n, media, potencial: o.potencial, pontos_fortes: o.pontos_fortes, desenvolver: o.desenvolver, pdi: o.pdi };
+      const rec = { colaborador_id: o.colaborador_id, ciclo: o.ciclo.trim(), data: o.data || hoje(), avaliador: o.avaliador, notas: n, media, pontos_fortes: o.pontos_fortes, desenvolver: o.desenvolver, pdi: o.pdi };
       if (!await save("avaliacoes", a.id, rec)) return false;
       const f = notaFinal(rec);
       toast(`Avaliação salva · nota final ${fmtNota(f.nota)} (${CONCEITOS[f.conceito]})`);
@@ -1089,7 +1078,7 @@ const VIEWS = {
           : emptyState("Sem teste DISC", adm ? "Gere o link do teste para a pessoa responder ou lance um resultado de outra ferramenta." : "O RH ainda não registrou um teste para esta pessoa.")}
         </section>
         <section class="panel"><header><h2>Avaliações de desempenho</h2><button type="button" class="btn sm" data-action="new-aval" data-id="${esc(c.id)}">Nova avaliação</button></header>
-          ${avs.length ? `<div class="list">${avs.map(v => `<div class="list-item"><div class="grow"><b>${esc(v.ciclo)}</b><p class="small muted">${fmtData(v.data)}${v.avaliador ? " · " + esc(v.avaliador) : ""} · potencial ${esc(v.potencial).toLowerCase()}</p>
+          ${avs.length ? `<div class="list">${avs.map(v => `<div class="list-item"><div class="grow"><b>${esc(v.ciclo)}</b><p class="small muted">${fmtData(v.data)}${v.avaliador ? " · " + esc(v.avaliador) : ""}</p>
               ${v.pdi ? `<p class="small" style="margin-top:4px;white-space:pre-wrap"><b>PDI:</b> ${esc(v.pdi)}</p>` : ""}</div>
               <div style="text-align:right"><span class="small muted">Nota final</span><br><span class="score">${fmtNota(notaFinal(v).nota)}</span><br><span class="pill ${CONCEITO_CLS[notaFinal(v).conceito]}">${CONCEITOS[notaFinal(v).conceito]}</span><br><button type="button" class="btn link sm" data-action="ver-aval" data-id="${esc(v.id)}">Ver</button></div></div>`).join("")}</div>`
           : emptyState("Sem avaliações", "Registre a primeira avaliação para acompanhar a evolução.")}
@@ -1132,24 +1121,22 @@ const VIEWS = {
     const doEscopo = S.avaliacoes.filter(a => noEscopo(a.colaborador_id));
     const ciclos = [...new Set(doEscopo.map(a => a.ciclo))].sort().reverse();
     const lista = doEscopo.filter(a => !F.ciclo || a.ciclo === F.ciclo).sort(byDataDesc);
-    // 9 Box: avaliação mais recente de cada pessoa dentro do filtro
+    // avaliação mais recente de cada pessoa dentro do filtro, agrupada pelo conceito da nota final
     const ult = {};
     lista.forEach(a => { if (!ult[a.colaborador_id]) ult[a.colaborador_id] = a; });
-    const box = [[[], [], []], [[], [], []], [[], [], []]];
-    Object.values(ult).forEach(a => box[potIdx(a.potencial)][nivel(a.media)].push(colab(a.colaborador_id)));
-    const rows = [["alto", 2], ["medio", 1], ["baixo", 0]];
+    const porConceito = Object.fromEntries(Object.keys(CONCEITOS).map(k => [k, []]));
+    Object.values(ult).forEach(a => porConceito[notaFinal(a).conceito].push([colab(a.colaborador_id), a]));
     const comp = COMPETENCIAS.map(([n]) => { const v = Object.values(ult).map(a => a.notas?.[n]).filter(Boolean); return [n, v.length ? v.reduce((s, x) => s + x, 0) / v.length : 0]; });
-    return `<div class="head"><div><h1>Avaliação de desempenho</h1><p>Notas por competência, potencial e plano de desenvolvimento. A matriz 9 Box cruza desempenho e potencial da avaliação mais recente.</p></div>
+    return `<div class="head"><div><h1>Avaliação de desempenho</h1><p>Notas por competência, análise comportamental e plano de desenvolvimento. A nota final de 0 a 10 é calculada automaticamente.</p></div>
         <div class="actions"><select id="q-ciclo" data-filter="ciclo" aria-label="Filtrar por ciclo" style="width:auto"><option value="">Todos os ciclos</option>${ciclos.map(c => `<option ${F.ciclo === c ? "selected" : ""}>${esc(c)}</option>`).join("")}</select><button type="button" class="btn primary" data-action="new-aval">Nova avaliação</button></div></div>
       ${seletorSetor()}
       <div class="grid-2">
-        <section class="panel"><header><h2>Matriz 9 Box</h2><span class="muted small num">${Object.keys(ult).length} pessoa(s)</span></header>
-          <div class="ninebox">
-            <div class="nb-axis v" style="grid-row:1/4">Potencial →</div>
-            ${rows.map(([k, p]) => [0, 1, 2].map(dsp => `<div class="nb-cell ${p + dsp >= 3 ? "hot" : ""}"><span class="nb-t">${NINE[k][dsp]}</span><div class="nb-people">${box[p][dsp].map(c => `<button type="button" class="av" style="--h:${hue(c.id)}" title="${esc(c.nome)}" data-action="perfil" data-id="${esc(c.id)}">${esc(iniciais(c.nome))}</button>`).join("")}</div></div>`).join("")).join("")}
-            <div></div><div class="nb-axis" style="grid-column:2/5">Desempenho →</div>
-          </div>
-          <p class="small muted" style="margin-top:10px">Desempenho: média abaixo de 3 = baixo, de 3 a 3,9 = médio, 4 ou mais = alto.</p>
+        <section class="panel"><header><h2>Equipe por conceito final</h2><span class="muted small num">${Object.keys(ult).length} pessoa(s)</span></header>
+          ${Object.keys(ult).length ? `<div class="list">${Object.entries(CONCEITOS).map(([k, t]) => `<div class="list-item" style="align-items:flex-start">
+            <span class="pill ${CONCEITO_CLS[k]}" style="min-width:118px;justify-content:center">${t} · ${porConceito[k].length}</span>
+            <div class="grow members">${porConceito[k].sort((x, y) => notaFinal(y[1]).nota - notaFinal(x[1]).nota).map(([c, a]) => `<button type="button" class="av" style="--h:${hue(c.id)}" title="${esc(c.nome)} · ${fmtNota(notaFinal(a).nota)}" data-action="perfil" data-id="${esc(c.id)}">${esc(iniciais(c.nome))}</button>`).join("") || `<span class="small muted">Ninguém</span>`}</div></div>`).join("")}</div>
+          <p class="small muted" style="margin-top:10px">Nota final: 9 ou mais = Excelente, 7 a 8,9 = Satisfatório, 5 a 6,9 = Regular, abaixo de 5 = Insatisfatório.</p>`
+          : emptyState("Sem avaliações no período", "A equipe aparece aqui depois da primeira avaliação.")}
         </section>
         <section class="panel"><header><h2>Média por competência</h2></header>
           ${Object.keys(ult).length ? `<div class="bars">${comp.map(([n, v]) => `<div class="bar-row" style="grid-template-columns:minmax(0,170px) minmax(0,1fr) 34px"><span>${esc(n)}</span><div class="bar-track"><div class="bar-fill" style="width:${v / 5 * 100}%;background:${v < 3 ? "var(--warn)" : "var(--accent)"}"></div></div><span class="num">${fmtNota(v)}</span></div>`).join("")}</div>`
@@ -1170,11 +1157,11 @@ const VIEWS = {
         </section>`;
       })()}
       <section class="panel"><header><h2>Avaliações registradas</h2></header>
-        ${lista.length ? `<div class="table-wrap"><table><thead><tr><th>Colaborador</th><th>Ciclo</th><th>Avaliador</th><th>Data</th><th>Média</th><th>Nota final</th><th>Potencial</th><th></th></tr></thead><tbody>
+        ${lista.length ? `<div class="table-wrap"><table><thead><tr><th>Colaborador</th><th>Ciclo</th><th>Avaliador</th><th>Data</th><th>Média</th><th>Nota final</th><th></th></tr></thead><tbody>
           ${lista.map(a => { const c = colab(a.colaborador_id); return `<tr><td><div class="person">${avatar(c)}<div><b>${esc(nomeDe(a.colaborador_id))}</b><small>${esc(c?.cargo)}</small></div></div></td><td>${esc(a.ciclo)}</td><td>${esc(a.avaliador || "—")}</td><td class="num">${fmtData(a.data)}</td>
-            <td><span class="score">${fmtNota(a.media)}</span> ${dots(a.media)}</td><td style="white-space:nowrap">${notaFinalChip(a)}</td><td>${esc(a.potencial)}</td>
+            <td><span class="score">${fmtNota(a.media)}</span> ${dots(a.media)}</td><td style="white-space:nowrap">${notaFinalChip(a)}</td>
             <td style="white-space:nowrap"><button type="button" class="btn link sm" data-action="ver-aval" data-id="${esc(a.id)}">Ver</button>${meus(a) ? `<button type="button" class="btn link sm" data-action="edit-aval" data-id="${esc(a.id)}">Editar</button><button type="button" class="btn link sm danger" data-action="del-aval" data-id="${esc(a.id)}">Excluir</button>` : ""}</td></tr>`; }).join("")}
-          </tbody></table></div>` : emptyState("Nenhuma avaliação registrada", "Avalie competências de 1 a 5, indique o potencial e registre o PDI.", `<button type="button" class="btn sm primary" data-action="new-aval">Nova avaliação</button>`)}
+          </tbody></table></div>` : emptyState("Nenhuma avaliação registrada", "Avalie as competências de 1 a 5, a análise comportamental e registre o PDI.", `<button type="button" class="btn sm primary" data-action="new-aval">Nova avaliação</button>`)}
       </section>`;
   },
 
@@ -1326,7 +1313,7 @@ function resumoComportamental(a) {
 function verAvaliacao(a) {
   openModal({
     title: `${nomeDe(a.colaborador_id)} · ${a.ciclo}`, submit: meus(a) ? "Editar" : "",
-    body: `<p class="muted small">${fmtData(a.data)}${a.avaliador ? " · avaliado por " + esc(a.avaliador) : ""} · potencial ${esc(a.potencial).toLowerCase()}</p>
+    body: `<p class="muted small">${fmtData(a.data)}${a.avaliador ? " · avaliado por " + esc(a.avaliador) : ""}</p>
       ${(() => { const f = notaFinal(a); return `<div class="kpi" style="text-align:center"><span>Nota final</span><b>${fmtNota(f.nota)}</b>
         <span><span class="pill ${CONCEITO_CLS[f.conceito]}">${CONCEITOS[f.conceito]}</span></span>
         <span class="small muted">Competências ${fmtNota(f.comp)}${f.comport != null ? " · Comportamental " + fmtNota(f.comport) : ""} (de 0 a 10)</span></div>`; })()}
