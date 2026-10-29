@@ -596,21 +596,11 @@ const linkDisc = token => new URL("teste-disc.html?t=" + token, location.href.sp
 const situacaoConvite = v => v.respondido_em ? "respondido" : new Date(v.expira_em) < new Date() ? "expirado" : "aberto";
 const conviteAberto = cid => S.disc_convites.find(v => v.colaborador_id === cid && situacaoConvite(v) === "aberto");
 
-function escolherDisc(cid) {
-  if (!pessoas().length) return toast("Cadastre um colaborador antes de aplicar o teste.", true);
-  const opcao = (acao, titulo, texto) => `<button type="button" class="list-item" data-action="${acao}" data-id="${esc(cid || "")}" style="width:100%;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;cursor:pointer;margin-bottom:10px">
-    <div class="grow"><b>${titulo}</b><small class="muted" style="display:block">${texto}</small></div><span aria-hidden="true">›</span></button>`;
-  openModal({
-    title: "Aplicar teste DISC", submit: "",
-    body: opcao("disc-link", "Enviar link para a pessoa responder", "Gera um link para mandar por WhatsApp ou e-mail. A pessoa responde no celular ou no computador, sem login, e o resultado chega aqui sozinho.")
-      + opcao("disc-aqui", "Preencher aqui agora", "Você marca as respostas nesta tela, junto com a pessoa.")
-  });
-}
-
 function formDiscLink(cid) {
   const lista = ativos().sort(byNome);
+  if (!lista.length) return toast("Cadastre um colaborador antes de aplicar o teste.", true);
   openModal({
-    title: "Enviar teste DISC por link", submit: "Gerar link",
+    title: "Aplicar teste DISC", submit: "Gerar link",
     body: `<div class="field"><label class="req" for="l-colab">Colaborador</label><select id="l-colab" name="colaborador_id"><option value="">Selecione…</option>${lista.map(c => `<option value="${esc(c.id)}" ${c.id === cid ? "selected" : ""}>${esc(c.nome)}</option>`).join("")}</select></div>
       <p class="small muted">O link vale por 15 dias e só pode ser respondido uma vez. A pessoa não precisa de login e não vê os dados da plataforma, só o questionário.</p>`,
     handler: async fd => {
@@ -627,59 +617,11 @@ function formDiscLink(cid) {
 
 function mostrarLinkDisc(v) {
   const c = colab(v.colaborador_id), link = linkDisc(v.token);
-  const msg = `Olá, ${(c?.nome || "").split(" ")[0]}! Segue o link do seu teste de perfil comportamental (DISC) da AFLUX. Leva cerca de 10 minutos e não tem resposta certa ou errada: ${link}`;
   openModal({
     title: "Link do teste · " + (c?.nome || "Colaborador"), submit: "", cancelar: "Fechar",
-    body: `<div class="field"><label for="l-link">Link para a pessoa</label><input type="text" id="l-link" value="${esc(link)}" readonly onclick="this.select()"></div>
-      <div class="actions" style="display:flex;gap:8px;flex-wrap:wrap">
-        <button type="button" class="btn primary" data-action="copiar" data-texto="${esc(link)}">Copiar link</button>
-        <button type="button" class="btn" data-action="copiar" data-texto="${esc(msg)}">Copiar mensagem pronta</button>
-        <a class="btn" href="https://wa.me/?text=${encodeURIComponent(msg)}" target="_blank" rel="noopener">Enviar pelo WhatsApp</a>
-      </div>
-      <p class="small muted">Válido até ${fmtData(String(v.expira_em).slice(0, 10))}. Quando a pessoa terminar, o resultado aparece em Testes DISC e no perfil dela.</p>`
-  });
-}
-
-function formDiscTeste(cid) {
-  if (!pessoas().length) return toast("Cadastre um colaborador antes de aplicar o teste.", true);
-  const grupos = DISC_GRUPOS.map((g, gi) => {
-    const ordem = discOrdem(gi);
-    const F4 = "DISC";
-    return `<div class="q-group" data-g="${gi}"><table><caption>Grupo ${gi + 1} de ${DISC_GRUPOS.length}</caption>
-      <thead><tr><th>Palavra</th><th>Mais</th><th>Menos</th></tr></thead><tbody>
-      ${ordem.map(k => `<tr><td>${esc(g[k])}</td>
-        <td><input type="radio" name="mais_${gi}" value="${F4[k]}" aria-label="Mais parecido: ${esc(g[k])}"></td>
-        <td><input type="radio" name="menos_${gi}" value="${F4[k]}" aria-label="Menos parecido: ${esc(g[k])}"></td></tr>`).join("")}
-      </tbody></table></div>`;
-  }).join("");
-  openModal({
-    title: "Aplicar teste DISC", wide: true, submit: "Calcular e salvar",
-    body: `<div class="form-grid">
-      <div class="field"><label class="req" for="d-colab">Colaborador</label><select id="d-colab" name="colaborador_id">${colabOptions(cid)}</select></div>
-      <div class="field"><label for="d-data">Data</label><input type="date" id="d-data" name="data" value="${hoje()}"></div>
-    </div>
-    <p class="muted small">Em cada grupo, marque a palavra que <b>mais</b> descreve a pessoa no trabalho e a que <b>menos</b> descreve. Responda pela primeira impressão. Leva cerca de 10 minutos.</p>
-    ${grupos}`,
-    handler: async fd => {
-      const cidSel = fd.get("colaborador_id");
-      if (!cidSel) return formErro("Escolha o colaborador.");
-      const mais = { D: 0, I: 0, S: 0, C: 0 }, menos = { D: 0, I: 0, S: 0, C: 0 };
-      let faltando = null;
-      mForm.querySelectorAll(".q-group").forEach(el => el.classList.remove("missing"));
-      for (let gi = 0; gi < DISC_GRUPOS.length; gi++) {
-        const m = fd.get("mais_" + gi), n = fd.get("menos_" + gi);
-        if (!m || !n || m === n) { faltando ??= gi; mForm.querySelector(`[data-g="${gi}"]`).classList.add("missing"); continue; }
-        mais[m]++; menos[n]++;
-      }
-      if (faltando !== null) {
-        mForm.querySelector(`[data-g="${faltando}"]`).scrollIntoView({ block: "center" });
-        return formErro("Marque uma palavra em “Mais” e outra diferente em “Menos” nos grupos destacados.");
-      }
-      const N = DISC_GRUPOS.length, v = {};
-      for (const f of "DISC") v[f] = Math.round((mais[f] - menos[f] + N) / (2 * N) * 100);
-      if (!await save("disc", null, { colaborador_id: cidSel, data: fd.get("data") || hoje(), d: v.D, i: v.I, s: v.S, c: v.C, perfil: perfilDe(v), origem: "Teste na plataforma", respostas: { mais, menos } })) return false;
-      toast("Resultado DISC salvo");
-    }
+    body: `<div class="field"><label for="l-link">Link do teste</label><input type="text" id="l-link" value="${esc(link)}" readonly onclick="this.select()"></div>
+      <div class="actions"><button type="button" class="btn primary" data-action="copiar" data-texto="${esc(link)}">Copiar link</button></div>
+      <p class="small muted">Válido até ${fmtData(String(v.expira_em).slice(0, 10))}. O link continua disponível para copiar em Testes DISC › Testes enviados por link. Quando a pessoa terminar, o resultado aparece em Testes DISC e no perfil dela.</p>`
   });
 }
 
@@ -863,7 +805,7 @@ function linksDisc() {
     <div class="list">${pend.map(v => { const exp = situacaoConvite(v) === "expirado";
       return `<div class="list-item"><div class="grow person">${avatar(colab(v.colaborador_id))}<div><b>${esc(nomeDe(v.colaborador_id))}</b><small>Enviado em ${fmtData(v.criado_em.slice(0, 10))} · ${exp ? "expirou em" : "vale até"} ${fmtData(v.expira_em.slice(0, 10))}</small></div></div>
         ${exp ? `<span class="pill bad">Expirado</span>` : `<span class="pill warn">Aguardando resposta</span>`}
-        ${exp ? "" : `<button type="button" class="btn sm" data-action="ver-link" data-id="${esc(v.id)}">Ver link</button>`}
+        ${exp ? "" : `<button type="button" class="btn sm primary" data-action="copiar" data-texto="${esc(linkDisc(v.token))}">Copiar link</button><button type="button" class="btn sm" data-action="ver-link" data-id="${esc(v.id)}">Ver link</button>`}
         <button type="button" class="btn sm danger" data-action="cancelar-link" data-id="${esc(v.id)}">${exp ? "Remover" : "Cancelar"}</button></div>`; }).join("")}
       ${resp.map(v => `<div class="list-item"><div class="grow person">${avatar(colab(v.colaborador_id))}<div><b>${esc(nomeDe(v.colaborador_id))}</b><small>Respondido em ${fmtData(v.respondido_em.slice(0, 10))}</small></div></div><span class="pill ok">Respondido</span><button type="button" class="btn sm" data-action="perfil" data-id="${esc(v.colaborador_id)}">Ver resultado</button></div>`).join("")}</div>
   </section>`;
@@ -981,7 +923,7 @@ const VIEWS = {
   disc() {
     const at = ativos();
     const linhas = at.map(c => [c, ultimoDisc(c.id)]).sort((a, b) => !!b[1] - !!a[1] || byNome(a[0], b[0]));
-    return `<div class="head"><div><h1>Testes DISC</h1><p>Mapeamento comportamental em quatro fatores.${isAdmin() ? " Envie o link do questionário para a pessoa responder, aplique aqui mesmo ou lance resultados de outra ferramenta." : " Os testes são aplicados e registrados pelo RH."}</p></div>
+    return `<div class="head"><div><h1>Testes DISC</h1><p>Mapeamento comportamental em quatro fatores.${isAdmin() ? " Gere o link do questionário para a pessoa responder ou lance resultados de outra ferramenta." : " Os testes são aplicados e registrados pelo RH."}</p></div>
         ${isAdmin() ? `<div class="actions"><button type="button" class="btn" data-action="disc-externo">Lançar resultado</button><button type="button" class="btn primary" data-action="disc-teste">Aplicar teste</button></div>` : ""}</div>
       ${seletorSetor()}
       <div class="factor-cards">${"DISC".split("").map(f => `<div class="factor" style="border-top-color:var(--${f.toLowerCase()})">
@@ -1193,9 +1135,7 @@ const ACTIONS = {
       "Excluir", async () => { if (!await remove("gestores", g.id)) return false; toast("Gestor excluído"); return true; });
   },
   "edit-setor": d => formSetor(S.setores.find(s => s.codigo === d.id) || { codigo: d.id }),
-  "disc-teste": d => escolherDisc(d.id),
-  "disc-aqui": d => formDiscTeste(d.id || undefined),
-  "disc-link": d => formDiscLink(d.id || undefined),
+  "disc-teste": d => formDiscLink(d.id),
   "ver-link": d => mostrarLinkDisc(S.disc_convites.find(v => v.id === d.id)),
   "cancelar-link": d => {
     const v = S.disc_convites.find(x => x.id === d.id);
@@ -1205,7 +1145,12 @@ const ACTIONS = {
   "atualizar-disc": async () => { await carregar(["disc", "disc_convites"]); toast("Lista atualizada"); },
   "copiar": async d => {
     try { await navigator.clipboard.writeText(d.texto); toast("Copiado"); }
-    catch (e) { const el = document.getElementById("l-link"); el?.select(); toast("Selecione e copie com Ctrl+C", true); }
+    catch (e) {
+      // navegador sem acesso à área de transferência: copia por um campo temporário
+      const t = document.createElement("textarea"); t.value = d.texto; (modal.open ? modal : document.body).append(t); t.select();
+      const ok = document.execCommand("copy"); t.remove();
+      toast(ok ? "Copiado" : "Não foi possível copiar. Use “Ver link” e copie com Ctrl+C.", !ok);
+    }
   },
   "disc-externo": d => formDiscExterno(d.id),
   "del-disc": d => confirmar("Excluir resultado DISC", `<p>Excluir este resultado de teste? Isso não pode ser desfeito.</p>`, "Excluir",
