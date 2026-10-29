@@ -322,7 +322,6 @@ dialog form { display: flex; flex-direction: column; max-height: calc(100vh - 40
       <button class="tab" data-action="go" data-view="gestores"><svg viewBox="0 0 24 24"><circle cx="12" cy="6.5" r="3"/><path d="M6.5 15c.8-2.6 2.9-4 5.5-4s4.7 1.4 5.5 4"/><circle cx="5" cy="18" r="2"/><circle cx="12" cy="19" r="2"/><circle cx="19" cy="18" r="2"/></svg>Gestores</button>
       <button class="tab" data-action="go" data-view="disc"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 3v18M3 12h18"/></svg>Testes DISC</button>
       <button class="tab" data-action="go" data-view="desempenho"><svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Desempenho</button>
-      <button class="tab" data-action="go" data-view="estrutura"><svg viewBox="0 0 24 24"><rect x="9" y="2.5" width="6" height="5" rx="1"/><rect x="2.5" y="16.5" width="6" height="5" rx="1"/><rect x="15.5" y="16.5" width="6" height="5" rx="1"/><path d="M12 7.5V12M5.5 16.5V12h13v4.5"/></svg>Estrutura</button>
       <button class="tab" data-action="go" data-view="cargos" id="tabCargos" hidden><svg viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2M3 13h18"/></svg>Cargos e salários</button>
       <button class="tab" data-action="go" data-view="feedbacks"><svg viewBox="0 0 24 24"><path d="M20 15a2 2 0 0 1-2 2H8l-4 4V5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2z"/></svg>Feedbacks</button>
       <button class="tab" data-action="go" data-view="usuarios" id="tabUsuarios" hidden><svg viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>Usuários e acessos</button>
@@ -982,7 +981,7 @@ const VIEWS = {
           <p class="small muted" style="margin-top:12px">Pelo fator predominante do teste mais recente de cada pessoa.</p>`
           : emptyState("Nenhum teste registrado", isAdmin() ? "Aplique o DISC para ver a composição comportamental da equipe." : "Os resultados aparecem aqui quando o RH registrar os testes.", isAdmin() ? `<button type="button" class="btn sm" data-action="disc-teste">Aplicar teste</button>` : "")}
         </section>
-        <section class="panel"><header><h2>Pessoas por setor</h2><button type="button" class="btn link" data-action="go" data-view="estrutura">Ver estrutura</button></header>
+        <section class="panel"><header><h2>Pessoas por setor</h2><button type="button" class="btn link" data-action="go" data-view="colaboradores">Ver colaboradores</button></header>
           <div class="bars">${porSetor.map(([k, n]) => `<div class="bar-row" style="grid-template-columns:minmax(0,170px) minmax(0,1fr) 34px"><span>${SETORES[k]}</span><div class="bar-track"><div class="bar-fill" style="width:${n / maxA * 100}%;background:var(--accent)"></div></div><span class="num">${n}</span></div>`).join("")}</div>
         </section>
       </div>
@@ -1131,7 +1130,7 @@ const VIEWS = {
     const sem = ativos().filter(c => !gestor(c.lider_id)).sort(byNome);
     const pessoaRow = c => `<div class="list-item" data-action="perfil" data-id="${esc(c.id)}" style="cursor:pointer;padding:8px 0"><div class="grow person">${avatar(c)}<div><b>${esc(c.nome)}</b><small>${esc(c.cargo)}</small></div></div><span class="tag">${esc(SETORES[c.setor])}</span></div>`;
     const gestorRow = x => `<div class="list-item" style="padding:8px 0"><div class="grow person">${avatar(x)}<div><b>${esc(x.nome)}</b><small>${esc(x.cargo || "Gestor")}</small></div></div><span class="tag">Gestor</span></div>`;
-    return `<div class="head"><div><h1>Gestores</h1><p>Quem lidera quem. Cada colaborador tem um gestor direto, e o organograma da aba Estrutura é montado a partir daqui.</p></div>
+    return `<div class="head"><div><h1>Gestores</h1><p>Quem lidera quem. Cada colaborador tem um gestor direto, e um gestor pode responder a outro gestor.</p></div>
         ${adm ? `<div class="actions"><button type="button" class="btn primary" data-action="new-gestor">Novo gestor</button></div>` : ""}</div>
       ${seletorSetor()}
       ${lista.length ? `<div class="areas">${lista.map(g => { const m = liderados(g.id).filter(c => !F.setor || c.setor === F.setor), subs = subGestores(g.id), sup = gestor(g.superior_id);
@@ -1142,34 +1141,6 @@ const VIEWS = {
         </article>`; }).join("")}</div>`
         : `<section class="panel">${emptyState("Nenhum gestor cadastrado", adm ? "Cadastre os gestores e depois marque os liderados diretos de cada um." : "O RH ainda não cadastrou os gestores.", adm ? `<button type="button" class="btn sm primary" data-action="new-gestor">Novo gestor</button>` : "")}</section>`}
       ${sem.length ? `<section class="panel"><header><h2>Sem gestor definido</h2><span class="pill plain num">${sem.length}</span></header><div class="list">${sem.map(pessoaRow).join("")}</div></section>` : ""}`;
-  },
-
-  estrutura() {
-    const vis = ativos();
-    const no = c => `<li><span class="node" data-action="perfil" data-id="${esc(c.id)}" role="button" tabindex="0">${avatar(c)}<span><b>${esc(c.nome)}</b> <small>${esc(c.cargo)} · ${esc(SETORES[c.setor])}</small></span></span></li>`;
-    // Cada gestor mostra embaixo os gestores que respondem a ele e depois os colaboradores
-    const ramo = (g, vistos) => {
-      if (vistos.has(g.id)) return "";
-      vistos.add(g.id);
-      const subs = subGestores(g.id).map(x => ramo(x, vistos)).filter(Boolean), m = vis.filter(c => c.lider_id === g.id).sort(byNome);
-      if (!subs.length && !m.length) return "";
-      return `<li><span class="node" data-action="go" data-view="gestores" role="button" tabindex="0">${avatar(g)}<span><b>${esc(g.nome)}</b> <small>${esc(g.cargo || "Gestor")} · ${subs.length + m.length} liderado(s)</small></span></span><ul>${subs.join("")}${m.map(no).join("")}</ul></li>`;
-    };
-    const vistos = new Set();
-    const semGestor = vis.filter(c => !gestor(c.lider_id)).sort(byNome);
-    const arvore = [...S.gestores].filter(g => !gestor(g.superior_id)).sort(byNome).map(g => ramo(g, vistos)).join("")
-      + (semGestor.length ? `<li><span class="node" style="cursor:default"><span><b>Sem gestor definido</b> <small>${semGestor.length} pessoa(s)</small></span></span><ul>${semGestor.map(no).join("")}</ul></li>` : "");
-    const setores = setoresVisiveis().filter(k => !F.setor || k === F.setor);
-    return `<div class="head"><div><h1>Estrutura organizacional</h1><p>Setores da empresa e organograma montado a partir do gestor direto de cada colaborador.</p></div></div>
-      ${seletorSetor()}
-      <div class="areas">${setores.map(k => { const s = S.setores.find(x => x.codigo === k) || { codigo: k }; const m = vis.filter(c => c.setor === k).sort(byNome); const r = colab(s.responsavel_id);
-        return `<article class="area"><header><div><h3>${SETORES[k]}</h3><p class="small muted">${r ? "Responsável: " + esc(r.nome) : "Sem responsável definido"}</p></div><span class="pill plain num">${m.length}</span></header>
-          ${s.descricao ? `<p class="small">${esc(s.descricao)}</p>` : ""}
-          <div class="members">${m.map(c => `<button type="button" class="av" style="--h:${hue(c.id)}" title="${esc(c.nome)} · ${esc(c.cargo)}" data-action="perfil" data-id="${esc(c.id)}">${esc(iniciais(c.nome))}</button>`).join("") || `<span class="small muted">Ninguém neste setor ainda</span>`}</div>
-          ${isAdmin() ? `<div class="actions"><button type="button" class="btn sm" data-action="edit-setor" data-id="${k}">Editar setor</button></div>` : ""}</article>`; }).join("")}</div>
-      <section class="panel"><header><h2>Organograma</h2><button type="button" class="btn link" data-action="go" data-view="gestores">Ver gestores</button></header>
-        ${arvore ? `<div style="overflow-x:auto"><ul class="tree">${arvore}</ul></div>` : emptyState("Organograma vazio", "Ele se monta sozinho quando os colaboradores têm gestor definido na aba Gestores.")}
-      </section>`;
   },
 
   feedbacks() {
