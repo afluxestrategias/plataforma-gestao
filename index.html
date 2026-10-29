@@ -398,6 +398,19 @@ const COMPORTAMENTAIS = [
 ];
 const CONCEITOS = { E: "Excelente", S: "Satisfatório", R: "Regular", I: "Insatisfatório" };
 const CONCEITO_CLS = { E: "ok", S: "plain", R: "warn", I: "bad" };
+// Nota final de 0 a 10: metade vem da média das competências (1 a 5, vezes 2)
+// e metade da análise comportamental (E = 10, S = 7,5, R = 5, I = 2,5).
+// Avaliações sem a parte comportamental usam só as competências.
+const PESO_CONCEITO = { E: 10, S: 7.5, R: 5, I: 2.5 };
+function notaFinal(a) {
+  if (!a) return null;
+  const comp = a.media * 2;
+  const vals = Object.values(a.notas?.comportamental || {}).map(k => PESO_CONCEITO[k]).filter(x => x != null);
+  const nota = Math.round((vals.length ? (comp + vals.reduce((s, x) => s + x, 0) / vals.length) / 2 : comp) * 10) / 10;
+  const conceito = nota >= 9 ? "E" : nota >= 7 ? "S" : nota >= 5 ? "R" : "I";
+  return { nota, conceito, comp, comport: vals.length ? vals.reduce((s, x) => s + x, 0) / vals.length : null };
+}
+const notaFinalChip = a => { const f = notaFinal(a); return f ? `<span class="score">${fmtNota(f.nota)}</span> <span class="pill ${CONCEITO_CLS[f.conceito]}">${CONCEITOS[f.conceito]}</span>` : `<span class="muted">—</span>`; };
 const NINE = { alto: ["Enigma", "Em crescimento", "Estrela"], medio: ["Dilema", "Mantenedor", "Alto desempenho"], baixo: ["Insuficiente", "Eficaz", "Comprometido"] };
 const TIPOS_FB = ["Reconhecimento", "Construtivo", "Reunião 1:1", "Alinhamento de metas"];
 const STATUS = ["Ativo", "Férias", "Afastado", "Desligado"];
@@ -737,7 +750,7 @@ function formAvaliacao(a = {}, cid) {
       <div class="scale" role="radiogroup" aria-label="${esc(n)}">${[1,2,3,4,5].map(v => `<label><input type="radio" name="comp_${i}" value="${v}" ${notas[n] == v ? "checked" : ""}><span>${v}</span></label>`).join("")}</div></div>`).join("")}
     </div>
     <div><p class="lbl">Análise de desempenho comportamental <span class="muted">· E Excelente, S Satisfatório, R Regular, I Insatisfatório</span></p>
-    ${COMPORTAMENTAIS.map(([n, d], i) => `<div class="comp-row"><div><b>${String(i + 1).padStart(2, "0")} · ${esc(n)}</b>${d ? `<small>${esc(d)}</small>` : ""}</div>
+    ${COMPORTAMENTAIS.map(([n, d], i) => `<div class="comp-row"><div><b>${esc(n)}</b>${d ? `<small>${esc(d)}</small>` : ""}</div>
       <div class="scale" role="radiogroup" aria-label="${esc(n)}">${Object.entries(CONCEITOS).map(([k, t]) => `<label title="${t}"><input type="radio" name="comport_${i}" value="${k}" ${notas.comportamental?.[n] === k ? "checked" : ""}><span>${k}</span></label>`).join("")}</div></div>`).join("")}
     </div>
     <div class="form-grid">
@@ -756,7 +769,8 @@ function formAvaliacao(a = {}, cid) {
       for (let i = 0; i < COMPORTAMENTAIS.length; i++) { const v = fd.get("comport_" + i); if (!v) return formErro(`Marque E, S, R ou I em “${COMPORTAMENTAIS[i][0]}”.`); n.comportamental[COMPORTAMENTAIS[i][0]] = v; }
       const rec = { colaborador_id: o.colaborador_id, ciclo: o.ciclo.trim(), data: o.data || hoje(), avaliador: o.avaliador, notas: n, media, potencial: o.potencial, pontos_fortes: o.pontos_fortes, desenvolver: o.desenvolver, pdi: o.pdi };
       if (!await save("avaliacoes", a.id, rec)) return false;
-      toast("Avaliação salva · média " + fmtNota(media));
+      const f = notaFinal(rec);
+      toast(`Avaliação salva · nota final ${fmtNota(f.nota)} (${CONCEITOS[f.conceito]})`);
     }
   });
 }
@@ -981,7 +995,7 @@ const VIEWS = {
     const at = ativos();
     const comDisc = at.filter(c => ultimoDisc(c.id));
     const avals = at.map(c => ultimaAval(c.id)).filter(Boolean);
-    const media = avals.length ? avals.reduce((s, a) => s + a.media, 0) / avals.length : null;
+    const media = avals.length ? avals.reduce((s, a) => s + notaFinal(a).nota, 0) / avals.length : null;
     const limite = new Date(Date.now() - 30 * 864e5).toISOString().slice(0, 10);
     const fbs = S.feedbacks.filter(f => noEscopo(f.colaborador_id));
     const fb30 = fbs.filter(f => (f.data || "") >= limite).length;
@@ -998,7 +1012,7 @@ const VIEWS = {
       <div class="kpis">
         <div class="kpi"><span>Colaboradores ativos</span><b>${at.length}</b><span>${pessoas().length - at.length} desligado(s)</span></div>
         <div class="kpi"><span>Mapeados no DISC</span><b>${at.length ? Math.round(comDisc.length / at.length * 100) : 0}%</b><span>${comDisc.length} de ${at.length} pessoas</span></div>
-        <div class="kpi"><span>Média de desempenho</span><b>${media === null ? "—" : fmtNota(media)}</b><span>última avaliação de cada pessoa · escala 1 a 5</span></div>
+        <div class="kpi"><span>Média de desempenho</span><b>${media === null ? "—" : fmtNota(media)}</b><span>nota final da última avaliação · escala 0 a 10</span></div>
         <div class="kpi"><span>Feedbacks em 30 dias</span><b>${fb30}</b><span>${fbs.length} registrados no total</span></div>
       </div>
       <div class="grid-2">
@@ -1077,7 +1091,7 @@ const VIEWS = {
         <section class="panel"><header><h2>Avaliações de desempenho</h2><button type="button" class="btn sm" data-action="new-aval" data-id="${esc(c.id)}">Nova avaliação</button></header>
           ${avs.length ? `<div class="list">${avs.map(v => `<div class="list-item"><div class="grow"><b>${esc(v.ciclo)}</b><p class="small muted">${fmtData(v.data)}${v.avaliador ? " · " + esc(v.avaliador) : ""} · potencial ${esc(v.potencial).toLowerCase()}</p>
               ${v.pdi ? `<p class="small" style="margin-top:4px;white-space:pre-wrap"><b>PDI:</b> ${esc(v.pdi)}</p>` : ""}</div>
-              <div style="text-align:right"><span class="score">${fmtNota(v.media)}</span><br>${dots(v.media)}<br><button type="button" class="btn link sm" data-action="ver-aval" data-id="${esc(v.id)}">Ver</button></div></div>`).join("")}</div>`
+              <div style="text-align:right"><span class="small muted">Nota final</span><br><span class="score">${fmtNota(notaFinal(v).nota)}</span><br><span class="pill ${CONCEITO_CLS[notaFinal(v).conceito]}">${CONCEITOS[notaFinal(v).conceito]}</span><br><button type="button" class="btn link sm" data-action="ver-aval" data-id="${esc(v.id)}">Ver</button></div></div>`).join("")}</div>`
           : emptyState("Sem avaliações", "Registre a primeira avaliação para acompanhar a evolução.")}
         </section>
       </div>
@@ -1150,15 +1164,15 @@ const VIEWS = {
         return `<section class="panel"><header><h2>Análise de desempenho comportamental</h2><span class="muted small num">${comAnalise.length} pessoa(s)</span></header>
           <div class="actions small" style="margin-bottom:8px">${Object.entries(CONCEITOS).map(([k, t]) => `<span><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:${cor[k]};margin-right:4px"></span>${k} ${t}</span>`).join("")}</div>
           ${COMPORTAMENTAIS.map(([n], i) => { const q = Object.fromEntries(Object.keys(CONCEITOS).map(k => [k, comAnalise.filter(a => a.notas.comportamental[n] === k).length]));
-            return `<div class="bar-row" style="grid-template-columns:minmax(0,230px) minmax(0,1fr) 90px"><span class="small">${String(i + 1).padStart(2, "0")} · ${esc(n)}</span>
+            return `<div class="bar-row" style="grid-template-columns:minmax(0,230px) minmax(0,1fr) 90px"><span class="small">${esc(n)}</span>
               <div class="bar-track" style="display:flex">${Object.keys(CONCEITOS).map(k => q[k] ? `<div title="${q[k]} ${CONCEITOS[k]}" style="width:${q[k] / comAnalise.length * 100}%;background:${cor[k]}"></div>` : "").join("")}</div>
               <span class="small muted num">${Object.keys(CONCEITOS).map(k => k + q[k]).join(" ")}</span></div>`; }).join("")}
         </section>`;
       })()}
       <section class="panel"><header><h2>Avaliações registradas</h2></header>
-        ${lista.length ? `<div class="table-wrap"><table><thead><tr><th>Colaborador</th><th>Ciclo</th><th>Avaliador</th><th>Data</th><th>Média</th><th>Potencial</th><th></th></tr></thead><tbody>
+        ${lista.length ? `<div class="table-wrap"><table><thead><tr><th>Colaborador</th><th>Ciclo</th><th>Avaliador</th><th>Data</th><th>Média</th><th>Nota final</th><th>Potencial</th><th></th></tr></thead><tbody>
           ${lista.map(a => { const c = colab(a.colaborador_id); return `<tr><td><div class="person">${avatar(c)}<div><b>${esc(nomeDe(a.colaborador_id))}</b><small>${esc(c?.cargo)}</small></div></div></td><td>${esc(a.ciclo)}</td><td>${esc(a.avaliador || "—")}</td><td class="num">${fmtData(a.data)}</td>
-            <td><span class="score">${fmtNota(a.media)}</span> ${dots(a.media)}</td><td>${esc(a.potencial)}</td>
+            <td><span class="score">${fmtNota(a.media)}</span> ${dots(a.media)}</td><td style="white-space:nowrap">${notaFinalChip(a)}</td><td>${esc(a.potencial)}</td>
             <td style="white-space:nowrap"><button type="button" class="btn link sm" data-action="ver-aval" data-id="${esc(a.id)}">Ver</button>${meus(a) ? `<button type="button" class="btn link sm" data-action="edit-aval" data-id="${esc(a.id)}">Editar</button><button type="button" class="btn link sm danger" data-action="del-aval" data-id="${esc(a.id)}">Excluir</button>` : ""}</td></tr>`; }).join("")}
           </tbody></table></div>` : emptyState("Nenhuma avaliação registrada", "Avalie competências de 1 a 5, indique o potencial e registre o PDI.", `<button type="button" class="btn sm primary" data-action="new-aval">Nova avaliação</button>`)}
       </section>`;
@@ -1265,7 +1279,7 @@ const LISTAS = {
       ${l.map(c => { const av = ultimaAval(c.id); return `<tr class="click" data-action="perfil" data-id="${esc(c.id)}">
         <td><div class="person">${avatar(c)}<div><b>${esc(c.nome)}</b><small>${esc(c.cargo)}</small></div></div></td>
         <td><span class="tag">${esc(SETORES[c.setor])}</span></td><td>${esc(gestor(c.lider_id)?.nome || "—")}</td><td class="num">${fmtData(c.admissao)}</td>
-        <td>${discChip(ultimoDisc(c.id))}</td><td>${av ? `<span class="score">${fmtNota(av.media)}</span>` : `<span class="muted">—</span>`}</td><td>${statusPill(c.status)}</td></tr>`; }).join("")}
+        <td>${discChip(ultimoDisc(c.id))}</td><td>${av ? `<span class="score">${fmtNota(notaFinal(av).nota)}</span>` : `<span class="muted">—</span>`}</td><td>${statusPill(c.status)}</td></tr>`; }).join("")}
       </tbody></table></div><p class="small muted" style="margin-top:10px">${l.length} de ${base.length} colaborador(es)</p>`;
   },
   feedbacks() {
@@ -1306,15 +1320,18 @@ function resumoComportamental(a) {
   const cont = Object.keys(CONCEITOS).map(k => [k, Object.values(c).filter(v => v === k).length]).filter(([, q]) => q);
   return `<div><p class="lbl">Análise de desempenho comportamental</p>
     <div class="actions" style="margin-bottom:6px">${cont.map(([k, q]) => `<span class="pill ${CONCEITO_CLS[k]}">${q} ${CONCEITOS[k]}</span>`).join("")}</div>
-    ${COMPORTAMENTAIS.map(([n], i) => `<div class="comp-row"><span>${String(i + 1).padStart(2, "0")} · ${esc(n)}</span><span class="pill ${CONCEITO_CLS[c[n]] || "plain"}">${c[n] ? c[n] + " · " + CONCEITOS[c[n]] : "—"}</span></div>`).join("")}</div>`;
+    ${COMPORTAMENTAIS.map(([n], i) => `<div class="comp-row"><span>${esc(n)}</span><span class="pill ${CONCEITO_CLS[c[n]] || "plain"}">${c[n] ? c[n] + " · " + CONCEITOS[c[n]] : "—"}</span></div>`).join("")}</div>`;
 }
 
 function verAvaliacao(a) {
   openModal({
     title: `${nomeDe(a.colaborador_id)} · ${a.ciclo}`, submit: meus(a) ? "Editar" : "",
     body: `<p class="muted small">${fmtData(a.data)}${a.avaliador ? " · avaliado por " + esc(a.avaliador) : ""} · potencial ${esc(a.potencial).toLowerCase()}</p>
+      ${(() => { const f = notaFinal(a); return `<div class="kpi" style="text-align:center"><span>Nota final</span><b>${fmtNota(f.nota)}</b>
+        <span><span class="pill ${CONCEITO_CLS[f.conceito]}">${CONCEITOS[f.conceito]}</span></span>
+        <span class="small muted">Competências ${fmtNota(f.comp)}${f.comport != null ? " · Comportamental " + fmtNota(f.comport) : ""} (de 0 a 10)</span></div>`; })()}
       <div>${COMPETENCIAS.map(([n]) => `<div class="comp-row"><b>${esc(n)}</b><span><span class="score">${a.notas?.[n] ?? "—"}</span> ${dots(a.notas?.[n] || 0)}</span></div>`).join("")}
-      <div class="comp-row"><b>Média</b><span class="score" style="font-size:1.2rem">${fmtNota(a.media)}</span></div></div>
+      <div class="comp-row"><b>Média das competências</b><span class="score" style="font-size:1.2rem">${fmtNota(a.media)}</span></div></div>
       ${resumoComportamental(a)}
       ${a.pontos_fortes ? `<div><p class="lbl">Pontos fortes</p><p style="white-space:pre-wrap">${esc(a.pontos_fortes)}</p></div>` : ""}
       ${a.desenvolver ? `<div><p class="lbl">Pontos a desenvolver</p><p style="white-space:pre-wrap">${esc(a.desenvolver)}</p></div>` : ""}
