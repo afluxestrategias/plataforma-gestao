@@ -39,7 +39,7 @@ p { margin: 0 }
 button { font: inherit; color: inherit }
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px }
 
-.wrap { max-width: 960px; margin: 0 auto; padding: 20px 16px 40px; display: flex; flex-direction: column; gap: 18px }
+.wrap { max-width: 1280px; margin: 0 auto; padding: 20px 16px 40px; display: flex; flex-direction: column; gap: 18px }
 .top { display: flex; flex-direction: column; gap: 10px }
 .logo { width: 140px; height: auto; display: block; border-radius: 8px }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .logo { background: #fff; padding: 6px 8px } }
@@ -65,7 +65,7 @@ button { font: inherit; color: inherit }
 
 .pergunta { font-size: 1.15rem; font-family: var(--display); font-weight: 600 }
 .pergunta mark { background: var(--accent-soft); color: inherit; padding: 1px 6px; border-radius: 6px }
-.adjs { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px }
+.adjs { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px }
 .adj { text-align: left; padding: 11px 14px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); cursor: pointer; font-size: .95rem; min-height: 44px }
 .adj:hover { border-color: var(--accent) }
 .adj[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); font-weight: 700 }
@@ -95,7 +95,7 @@ button { font: inherit; color: inherit }
     <div class="prog"><b class="small">Passo 1 de 3</b><div class="prog-track"><div class="prog-fill" style="width:33%"></div></div></div>
     <h1 id="ola">Olá!</h1>
     <p>Este é o seu teste de <b>perfil comportamental DISC</b> da AFLUX. Ele mostra como você costuma agir no trabalho. Não existe resposta certa ou errada e leva cerca de 5 minutos.</p>
-    <p class="small muted"><b>Regras:</b> responda sozinho(a), sem ajuda de outras pessoas, e de preferência sem interrupções.</p>
+    <p class="small"><b>Regras:</b> Responda sozinho, sem ajuda de terceiros. Não interrompa o questionário com distrações ou conversas.</p>
     <div class="field"><label for="dNome">Nome completo</label><input id="dNome" name="nome" autocomplete="name" required></div>
     <div class="field"><label for="dTel">Telefone (com DDD)</label><input id="dTel" name="telefone" type="tel" inputmode="tel" autocomplete="tel" placeholder="(49) 99999-9999" required></div>
     <p class="err small" id="dErro" hidden></p>
@@ -106,7 +106,7 @@ button { font: inherit; color: inherit }
   <section id="tAdj" class="card" hidden>
     <div class="prog"><b class="small" id="aPasso">Passo 2 de 3</b><div class="prog-track"><div class="prog-fill" id="aBarra" style="width:66%"></div></div></div>
     <p class="pergunta" id="aPergunta"></p>
-    <p class="small muted" id="aAjuda"></p>
+    <p class="small"><b>Regras:</b> Responda sozinho, sem ajuda de terceiros. Não interrompa o questionário com distrações ou conversas.</p>
     <div class="adjs" id="aLista"></div>
     <p class="err small" id="aErro" hidden></p>
     <div class="rodape row">
@@ -125,10 +125,8 @@ const TELAS = ["tCarregando", "tAviso", "tDados", "tAdj"];
 const tela = nome => { TELAS.forEach(t => $(t).hidden = t !== nome); window.scrollTo(0, 0); };
 const MINIMO = 5;
 const PASSOS = {
-  sou: { n: 2, pergunta: `Marque as palavras que <mark>mais combinam com você</mark>.`,
-         ajuda: `Pense em como você é no trabalho no dia a dia, não em como gostaria de ser. Marque quantas quiser (pelo menos ${MINIMO}).` },
-  esperam: { n: 3, pergunta: `Agora marque <mark>como as pessoas esperam que você seja</mark> no trabalho.`,
-             ajuda: `Na sua percepção, o que colegas e liderança esperam de você, tendo você essas características ou não. Marque quantas quiser (pelo menos ${MINIMO}).` },
+  sou: { n: 2, pergunta: `Marque abaixo os adjetivos <mark>que melhor te representam</mark>.` },
+  esperam: { n: 3, pergunta: `Agora, na sua percepção, marque <mark>como os outros pensam que você deveria ser</mark> (atributos que você tenha ou não).` },
 };
 const token = new URLSearchParams(location.search).get("t") || "";
 const CHAVE = "disc-adj-" + token;
@@ -172,7 +170,6 @@ function mostrarPasso(p) {
   $("aPasso").textContent = `Passo ${cfg.n} de 3`;
   $("aBarra").style.width = (cfg.n / 3 * 100) + "%";
   $("aPergunta").innerHTML = cfg.pergunta;
-  $("aAjuda").textContent = cfg.ajuda;
   $("aLista").innerHTML = PALAVRAS.map(w => `<button type="button" class="adj" aria-pressed="${marcadas.has(w)}" data-w="${esc(w)}">${esc(w)}</button>`).join("");
   $("aAvancar").textContent = p === "esperam" ? "Enviar respostas" : "Próximo";
   $("aErro").hidden = true;
@@ -213,13 +210,13 @@ $("aAvancar").addEventListener("click", async () => {
   if (!/^[0-9a-f-]{36}$/i.test(token)) return aviso("!", "Link incompleto", "Confira se você abriu o link inteiro que recebeu. Se o problema continuar, peça um novo link ao RH.");
   if (!window.supabase || !cfg.SUPABASE_URL) return aviso("!", "Não foi possível abrir o teste", "Tente de novo em alguns minutos.");
   sb = window.supabase.createClient(cfg.SUPABASE_URL, cfg.SUPABASE_ANON_KEY, { auth: { persistSession: false } });
-  const [conv, adj] = await Promise.all([sb.rpc("disc_convite", { t: token }), sb.from("disc_adjetivos").select("palavra")]);
+  const [conv, adj] = await Promise.all([sb.rpc("disc_convite", { t: token }), sb.from("disc_adjetivos").select("palavra, ordem").order("ordem")]);
   if (conv.error || adj.error) return aviso("!", "Não foi possível abrir o teste", "Verifique a internet e tente de novo.");
   const data = conv.data;
   if (!data) return aviso("!", "Link inválido", "Este link não existe ou foi cancelado. Peça um novo link ao RH.");
   if (data.situacao === "respondido") return aviso("✓", "Teste já respondido", "Este teste já foi enviado. Obrigado!");
   if (data.situacao === "expirado") return aviso("!", "Link expirado", "O prazo para responder este teste acabou. Peça um novo link ao RH.");
-  PALAVRAS = adj.data.map(x => x.palavra).sort((a, b) => a.localeCompare(b, "pt-BR"));
+  PALAVRAS = adj.data.map(x => x.palavra);
   $("ola").textContent = data.nome ? `Olá, ${data.nome}!` : "Olá!";
   recuperar();
   $("dNome").value = R.nome; $("dTel").value = R.telefone;
