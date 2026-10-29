@@ -139,7 +139,32 @@ const nivelParte = p => p < 12 ? "Extremamente baixo" : p < 17 ? "Muito baixo" :
 const nivel5 = (x, lim, nomes) => nomes[lim.findIndex(l => x < l) < 0 ? nomes.length - 1 : lim.findIndex(l => x < l)];
 const NIVEIS = ["Baixo", "Normal baixo", "Normal alto", "Alto", "Muito alto"];
 
-function relatorioDisc(d, c, esc) {
+// Para cada fator: quanto das palavras positivas e das negativas daquele fator a pessoa marcou sobre si
+// fatorDe: { palavra: "D" | "I" | "S" | "C" } vindo da tabela disc_adjetivos
+function fatoresPosNeg(sou, fatorDe) {
+  const r = {};
+  for (const f of "DISC") {
+    const doFator = Object.keys(fatorDe).filter(w => fatorDe[w] === f);
+    const pos = doFator.filter(w => !NEGATIVAS_REL.has(w)), neg = doFator.filter(w => NEGATIVAS_REL.has(w));
+    const pct = (lista) => lista.length ? lista.filter(w => sou.includes(w)).length / lista.length * 100 : 0;
+    r[f] = { pos: pct(pos), neg: pct(neg) };
+  }
+  return r;
+}
+
+function graficoPosNeg(sou, fatorDe) {
+  if (!fatorDe || !Object.keys(fatorDe).length) return "";
+  const g = fatoresPosNeg(sou, fatorDe), fmt = x => x.toFixed(1).replace(".", ",") + "%";
+  return `<section class="rel-sec"><h3>Gráfico de fatores positivos e negativos</h3>
+    <p class="rel-muted">Para cada perfil, a parte das qualidades (+) e dos pontos de atenção (−) daquele perfil que a pessoa reconheceu em si mesma.</p>
+    <div class="rel-pn">${"DISC".split("").map(f => `<div class="rel-pn-col">
+      <div class="rel-pn-nums"><span class="t-${f}">+${fmt(g[f].pos)}</span><span class="t-${f}">−${fmt(g[f].neg)}</span></div>
+      <div class="rel-pn-bar"><div class="rel-pn-pos f-${f}" style="width:${g[f].pos / 2}%"></div><div class="rel-pn-neg f-${f}" style="width:${g[f].neg / 2}%"></div></div>
+      <b>${PERFIS_REL[f].nome}</b></div>`).join("")}</div>
+  </section>`;
+}
+
+function relatorioDisc(d, c, esc, fatorDe) {
   const v = { D: d.D, I: d.I, S: d.S, C: d.C }, p = partesDisc(v), perfil = perfilPorPartes(v);
   const P = PERFIS_REL[perfil[0]], n = (c?.nome || "A pessoa").split(" ")[0];
   const t = s => esc(s).replaceAll("{n}", esc(n));
@@ -194,6 +219,7 @@ function relatorioDisc(d, c, esc) {
       ${sec("Subcaracterísticas", "As subcaracterísticas deste perfil são: <b>" + [...P.sub, ...(perfil[1] ? PERFIS_REL[perfil[1]].sub.slice(0, 2) : [])].filter((x, i, l) => l.indexOf(x) === i).join(", ") + "</b>.")}
       ${sec("Habilidades básicas", t(P.habilidades))}
       ${sec("Habilidades comuns", comSec("comuns"))}
+      ${r ? graficoPosNeg(r.sou || [], fatorDe) : ""}
       ${sec("Vantagens", t(P.vantagens))}
       ${sec("Desvantagens", t(P.desvantagens))}
     </section>

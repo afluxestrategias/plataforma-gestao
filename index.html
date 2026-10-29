@@ -268,6 +268,12 @@ dialog form { display: flex; flex-direction: column; max-height: calc(100vh - 40
 .rel-comp-bars > div { width: 28px; border-radius: 4px 4px 0 0; min-height: 2px }
 .rel-adapt { opacity: .4; background-image: repeating-linear-gradient(45deg, transparent 0 4px, rgba(255,255,255,.5) 4px 8px) }
 .rel-leg { display: inline-block; width: 12px; height: 12px; border-radius: 3px; background: var(--accent); vertical-align: -1px; margin-left: 8px }
+.rel-pn { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin-top: 8px }
+.rel-pn-col { display: flex; flex-direction: column; align-items: center; gap: 6px }
+.rel-pn-nums { display: flex; justify-content: space-between; width: 100%; font-weight: 700; font-size: .85rem; font-variant-numeric: tabular-nums }
+.rel-pn-bar { display: flex; justify-content: center; width: 100%; height: 34px; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); background: linear-gradient(var(--line), var(--line)) center / 1px 100% no-repeat }
+.rel-pn-pos { margin-left: auto; border-radius: 17px 0 0 17px; min-width: 3px }
+.rel-pn-neg { margin-right: auto; border-radius: 0 17px 17px 0; opacity: .5; min-width: 3px }
 .rel-rodape { border-top: 1px solid var(--line); padding-top: 12px; font-size: .8rem }
 @media (max-width: 560px) { .relatorio { padding: 18px } .rel-capa { flex-direction: column; align-items: flex-start } .rel-grade { grid-template-columns: minmax(0, 1fr) } .rel-fatores { grid-template-columns: repeat(2, minmax(0, 1fr)) } }
 @media print {
@@ -339,11 +345,11 @@ dialog form { display: flex; flex-direction: column; max-height: calc(100vh - 40
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <script src="config.js?v=2"></script>
-<script src="relatorio-disc.js?v=1"></script>
+<script src="relatorio-disc.js?v=2"></script>
 <script>
 const SETORES = { CONTABIL: "Contábil", FISCAL: "Fiscal", DP: "Departamento Pessoal", ATENDIMENTO: "Atendimento" };
 const TABELAS = ["setores", "gestores", "colaboradores", "disc", "avaliacoes", "feedbacks"];
-const S = { setores: [], gestores: [], colaboradores: [], disc: [], avaliacoes: [], feedbacks: [], perfis: [], disc_convites: [] };
+const S = { setores: [], gestores: [], colaboradores: [], disc: [], avaliacoes: [], feedbacks: [], perfis: [], disc_convites: [], disc_adjetivos: [] };
 let sb = null, me = null, carregado = false;
 let view = "painel", perfilId = null;
 const F = { setor: "", busca: "", status: "", fbColab: "", fbTipo: "", ciclo: "" };
@@ -435,10 +441,11 @@ function erroMsg(e) {
   return "Não foi possível salvar: " + (e?.message || "erro desconhecido") + ".";
 }
 async function carregar(tabelas = TABELAS) {
-  const lista = isAdmin() && tabelas === TABELAS ? [...tabelas, "perfis", "disc_convites"] : tabelas;
+  const lista = tabelas !== TABELAS ? tabelas : [...tabelas, "disc_adjetivos", ...(isAdmin() ? ["perfis", "disc_convites"] : [])];
   const res = await Promise.all(lista.map(t => sb.from(t).select("*")));
   res.forEach((r, i) => {
-    if (r.error) return toast("Não foi possível carregar " + lista[i] + ": " + r.error.message, true);
+    // a lista de adjetivos só existe depois de rodar o disc-adjetivos.sql; sem ela o relatório só não mostra esse gráfico
+    if (r.error) return lista[i] === "disc_adjetivos" ? null : toast("Não foi possível carregar " + lista[i] + ": " + r.error.message, true);
     S[lista[i]] = r.data.map(x => doBanco(lista[i], x));
   });
   carregado = true; render();
@@ -978,7 +985,7 @@ const VIEWS = {
     if (!d) return emptyState("Relatório não encontrado", "Volte para a aba Testes DISC e abra o relatório de novo.");
     return `<div class="head no-print"><div><button type="button" class="btn link" data-action="perfil" data-id="${esc(d.colaborador_id)}">← ${esc(c?.nome || "Voltar")}</button></div>
         <div class="actions"><button type="button" class="btn primary" data-action="imprimir">Imprimir / salvar PDF</button></div></div>
-      ${relatorioDisc(d, c, esc)}`;
+      ${relatorioDisc(d, c, esc, Object.fromEntries(S.disc_adjetivos.map(a => [a.palavra, a.fator])))}`;
   },
 
   disc() {
