@@ -272,6 +272,13 @@ dialog form { display: flex; flex-direction: column; max-height: calc(100vh - 40
 .rel-pn-neg { margin-right: auto; border-radius: 0 17px 17px 0; opacity: .5; min-width: 3px }
 .rel-rodape { border-top: 1px solid var(--line); padding-top: 12px; font-size: .8rem }
 @media (max-width: 560px) { .relatorio { padding: 18px } .rel-capa { flex-direction: column; align-items: flex-start } .rel-grade { grid-template-columns: minmax(0, 1fr) } .rel-fatores { grid-template-columns: repeat(2, minmax(0, 1fr)) } }
+/* plano de cargos */
+.cg-area { font-family: var(--display); font-weight: 700; color: var(--accent); margin: 14px 0 6px }
+.cg-lista { margin: 4px 0 0; padding-left: 18px; display: flex; flex-direction: column; gap: 2px }
+.cg-politica summary { display: flex; justify-content: space-between; align-items: center; cursor: pointer; list-style: none; gap: 10px }
+.cg-politica summary::-webkit-details-marker { display: none }
+.cg-politica summary::after { content: '▾'; color: var(--muted) } .cg-politica[open] summary::after { content: '▴' }
+.cg-politica-txt { display: flex; flex-direction: column; gap: 6px; margin-top: 12px } .cg-politica-txt .lbl { margin-top: 8px }
 /* evidências do período */
 .fb-cols { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 16px; align-items: start }
 .fb-form { display: grid; grid-template-columns: minmax(0, 1fr) 290px; gap: 18px; align-items: start }
@@ -985,23 +992,53 @@ function enquadramento(r) {
   return { sit: "dentro", txt: "Dentro do plano", cls: "ok", dif: 0 };
 }
 
+// Áreas do plano, na ordem do documento, e o setor da plataforma correspondente (para o filtro)
+const AREAS_PLANO = [["Geral", null], ["Atendimento", ["ATENDIMENTO"]], ["Contábil/Fiscal", ["CONTABIL", "FISCAL"]], ["Departamento Pessoal", ["DP"]]];
+const NIVEIS_PLANO = ["Estagiário", "Auxiliar", "Assistente", "Analista", "Coordenação"];
+const areaNoFiltro = area => { const a = AREAS_PLANO.find(([n]) => n === area); return !F.setor || !a || !a[1] || a[1].includes(F.setor); };
+const ordemCargo = (a, b) => (a.ordem ?? 999) - (b.ordem ?? 999) || byNome(a, b);
+const listaTexto = t => t ? `<ul class="cg-lista">${t.split("\n").map(l => l.trim()).filter(Boolean).map(l => `<li>${esc(l.replace(/;$/, ""))}</li>`).join("")}</ul>` : "";
+
+// Critérios de evolução do plano: 12 meses no cargo e avaliação acima de 85% (nota final 8,5 de 10)
+function evolucao(c, r) {
+  const desde = r?.no_cargo_desde || c.admissao;
+  const meses = desde ? Math.floor((Date.now() - new Date(desde)) / (30.44 * 864e5)) : null;
+  const av = ultimaAval(c.id), nota = av ? notaFinal(av).nota : null;
+  const faltaTempo = meses == null || meses < 12, faltaNota = nota == null || nota < 8.5;
+  return { meses, nota, apto: !faltaTempo && !faltaNota,
+    txt: [meses == null ? "sem data no cargo" : `${meses} ${meses === 1 ? "mês" : "meses"} no cargo`, nota == null ? "sem avaliação" : `nota ${fmtNota(nota)}`].join(" · ") };
+}
+
 function formCargo(cg = {}) {
+  const area = cg.area || "";
+  const campo = (id, rotulo, nome, ph = "") => `<div class="field full"><label for="${id}">${rotulo}</label><textarea id="${id}" name="${nome}" placeholder="${ph}">${esc(cg[nome])}</textarea></div>`;
   openModal({
-    title: cg.id ? "Editar cargo" : "Novo cargo no plano",
+    title: cg.id ? "Editar cargo" : "Novo cargo no plano", wide: true,
     body: `<div class="form-grid">
-      <div class="field full"><label class="req" for="cg-nome">Nome do cargo</label><input type="text" id="cg-nome" name="nome" value="${esc(cg.nome)}" placeholder="Ex.: Assistente Contábil/Fiscal I"></div>
-      <div class="field"><label for="cg-nivel">Nível</label><input type="text" id="cg-nivel" name="nivel" value="${esc(cg.nivel)}" placeholder="Ex.: Júnior, Pleno, I, II"></div>
-      <div class="field"><label for="cg-setor">Setor</label><select id="cg-setor" name="setor"><option value="">Qualquer setor</option>${Object.entries(SETORES).map(([k, n]) => `<option value="${k}" ${k === cg.setor ? "selected" : ""}>${n}</option>`).join("")}</select></div>
+      <div class="field full"><label class="req" for="cg-nome">Nome do cargo</label><input type="text" id="cg-nome" name="nome" value="${esc(cg.nome)}" placeholder="Ex.: Assistente Contábil/Fiscal I - Júnior"></div>
+      <div class="field"><label for="cg-area">Setor do plano</label><select id="cg-area" name="area"><option value="">Selecione…</option>${AREAS_PLANO.map(([n]) => `<option ${n === area ? "selected" : ""}>${n}</option>`).join("")}</select></div>
+      <div class="field"><label for="cg-nivel">Nível hierárquico</label><select id="cg-nivel" name="nivel"><option value="">Selecione…</option>${NIVEIS_PLANO.map(n => `<option ${n === cg.nivel ? "selected" : ""}>${n}</option>`).join("")}</select></div>
+      <div class="field"><label for="cg-cbo">CBO</label><input type="text" id="cg-cbo" name="cbo" value="${esc(cg.cbo)}" placeholder="Ex.: 4131-10"></div>
+      <div class="field"><label for="cg-ordem">Ordem no plano</label><input type="number" id="cg-ordem" name="ordem" value="${esc(cg.ordem)}" min="1"></div>
+      <div class="field full"><label for="cg-rep">Reporta-se a</label><input type="text" id="cg-rep" name="reporta" value="${esc(cg.reporta)}"></div>
       <div class="field"><label for="cg-min">Salário previsto (piso)</label><input type="text" inputmode="decimal" id="cg-min" name="salario_min" value="${valorCampo(cg.salario_min)}" placeholder="Ex.: 2.500,00"></div>
-      <div class="field"><label for="cg-max">Teto da faixa</label><input type="text" inputmode="decimal" id="cg-max" name="salario_max" value="${valorCampo(cg.salario_max)}" placeholder="Deixe em branco se for valor único"></div>
-      <div class="field full"><label for="cg-desc">Descrição das atividades</label><textarea id="cg-desc" name="descricao">${esc(cg.descricao)}</textarea></div>
-      <div class="field full"><label for="cg-req">Requisitos para o cargo</label><textarea id="cg-req" name="requisitos" placeholder="Formação, experiência, conhecimentos…">${esc(cg.requisitos)}</textarea></div>
+      <div class="field"><label for="cg-max">Teto da faixa</label><input type="text" inputmode="decimal" id="cg-max" name="salario_max" value="${valorCampo(cg.salario_max)}" placeholder="Em branco se for valor único"></div>
+      <div class="field full"><label for="cg-sobs">Observação sobre o salário</label><input type="text" id="cg-sobs" name="salario_obs" value="${esc(cg.salario_obs)}" placeholder="Ex.: R$ 1.935,00 nos primeiros 90 dias"></div>
+      ${campo("cg-desc", "Descrição", "descricao")}
+      ${campo("cg-bon", "Bonificações <span class=\"muted\">(uma por linha)</span>", "bonificacoes")}
+      ${campo("cg-ativ", "Atividades <span class=\"muted\">(uma por linha)</span>", "atividades")}
+      ${campo("cg-req", "Requisitos básicos <span class=\"muted\">(um por linha)</span>", "requisitos")}
+      ${campo("cg-des", "Requisitos desejáveis", "desejaveis")}
+      ${campo("cg-hab", "Habilidades <span class=\"muted\">(uma por linha)</span>", "habilidades")}
+      ${campo("cg-ati", "Atitudes <span class=\"muted\">(uma por linha)</span>", "atitudes")}
     </div>`,
     handler: async fd => {
       const o = Object.fromEntries(fd);
       o.nome = o.nome.trim();
       if (!o.nome) return formErro("Informe o nome do cargo.");
       o.salario_min = lerValor(o.salario_min); o.salario_max = lerValor(o.salario_max);
+      o.ordem = o.ordem ? Number(o.ordem) : null;
+      o.setor = (AREAS_PLANO.find(([n]) => n === o.area)?.[1] || []).length === 1 ? AREAS_PLANO.find(([n]) => n === o.area)[1][0] : null;
       if (Number.isNaN(o.salario_min) || Number.isNaN(o.salario_max)) return formErro("Confira os valores. Use o formato 2.500,00.");
       if (o.salario_min != null && o.salario_max != null && o.salario_max < o.salario_min) return formErro("O teto não pode ser menor que o piso.");
       if (!await save("cargos_plano", cg.id, o)) return false;
@@ -1010,22 +1047,44 @@ function formCargo(cg = {}) {
   });
 }
 
+function verCargo(cg) {
+  const sec = (t, html) => html ? `<div><p class="lbl">${t}</p>${html}</div>` : "";
+  const pessoas = S.remuneracao.filter(r => r.cargo_id === cg.id).map(r => colab(r.colaborador_id)).filter(Boolean).sort(byNome);
+  openModal({
+    title: cg.nome, wide: true, submit: "Editar", cancelar: "Fechar",
+    body: `<p class="muted small">${[cg.area, cg.nivel, cg.cbo ? "CBO " + cg.cbo : ""].filter(Boolean).map(esc).join(" · ")}</p>
+      ${sec("Reporta-se", cg.reporta ? `<p>${esc(cg.reporta)}</p>` : "")}
+      ${sec("Salário", `<p><b>${esc(cg.salario_min == null && cg.salario_obs ? "Conforme observação" : faixaTxt(cg))}</b></p>${cg.salario_obs ? `<p class="small muted">${esc(cg.salario_obs)}</p>` : ""}`)}
+      ${sec("Descrição", cg.descricao ? `<p>${esc(cg.descricao)}</p>` : "")}
+      ${sec("Bonificações", listaTexto(cg.bonificacoes))}
+      ${sec("Atividades", listaTexto(cg.atividades))}
+      ${sec("Requisitos básicos", listaTexto(cg.requisitos))}
+      ${sec("Requisitos desejáveis", listaTexto(cg.desejaveis))}
+      ${sec("Habilidades", listaTexto(cg.habilidades))}
+      ${sec("Atitudes", listaTexto(cg.atitudes))}
+      ${sec("Pessoas neste cargo", pessoas.length ? `<p>${pessoas.map(c => esc(c.nome)).join(", ")}</p>` : `<p class="small muted">Ninguém</p>`)}`,
+    handler: () => { setTimeout(() => formCargo(cg), 0); }
+  });
+}
+
 function formRemuneracao(cid) {
   const c = colab(cid), r = remunDe(cid) || {};
-  const cargos = [...S.cargos_plano].sort((a, b) => byNome(a, b) || (a.nivel || "").localeCompare(b.nivel || ""));
+  const cargos = [...S.cargos_plano].sort(ordemCargo);
   openModal({
     title: "Cargo e salário · " + c.nome,
     body: `<div class="form-grid">
-      <div class="field full"><label for="rm-cargo">Cargo no plano</label><select id="rm-cargo" name="cargo_id"><option value="">Sem cargo no plano</option>${cargos.map(cg => `<option value="${esc(cg.id)}" ${cg.id === r.cargo_id ? "selected" : ""}>${esc(cg.nome)}${cg.nivel ? " · " + esc(cg.nivel) : ""} (${esc(faixaTxt(cg))})</option>`).join("")}</select>
+      <div class="field full"><label for="rm-cargo">Cargo no plano</label><select id="rm-cargo" name="cargo_id"><option value="">Sem cargo no plano</option>${AREAS_PLANO.map(([a]) => { const l = cargos.filter(cg => (cg.area || "") === a); return l.length ? `<optgroup label="${esc(a)}">${l.map(cg => `<option value="${esc(cg.id)}" ${cg.id === r.cargo_id ? "selected" : ""}>${esc(cg.nome)} (${esc(faixaTxt(cg))})</option>`).join("")}</optgroup>` : ""; }).join("")}
+        ${cargos.filter(cg => !AREAS_PLANO.some(([a]) => a === cg.area)).map(cg => `<option value="${esc(cg.id)}" ${cg.id === r.cargo_id ? "selected" : ""}>${esc(cg.nome)} (${esc(faixaTxt(cg))})</option>`).join("")}</select>
         <small class="muted">Cargo no cadastro: ${esc(c.cargo)}</small></div>
       <div class="field"><label for="rm-sal">Salário atual</label><input type="text" inputmode="decimal" id="rm-sal" name="salario_atual" value="${valorCampo(r.salario_atual)}" placeholder="Ex.: 2.350,00"></div>
+      <div class="field"><label for="rm-desde">No cargo desde</label><input type="date" id="rm-desde" name="no_cargo_desde" value="${esc(r.no_cargo_desde || "")}"><small class="muted">Em branco, usa a data de admissão${c.admissao ? " (" + fmtData(c.admissao) + ")" : ""}.</small></div>
       <div class="field full"><label for="rm-obs">Observações</label><textarea id="rm-obs" name="observacoes" placeholder="Ex.: próxima revisão em março">${esc(r.observacoes)}</textarea></div>
     </div>`,
     handler: async fd => {
       const salario = lerValor(fd.get("salario_atual"));
       if (Number.isNaN(salario)) return formErro("Confira o salário. Use o formato 2.350,00.");
       const { error } = await sb.from("remuneracao").upsert({ colaborador_id: cid, cargo_id: fd.get("cargo_id") || null, salario_atual: salario,
-        observacoes: fd.get("observacoes") || null, atualizado_em: new Date().toISOString() }, { onConflict: "colaborador_id" });
+        no_cargo_desde: fd.get("no_cargo_desde") || null, observacoes: fd.get("observacoes") || null, atualizado_em: new Date().toISOString() }, { onConflict: "colaborador_id" });
       if (error) { toast(erroMsg(error), true); return false; }
       await carregar(["remuneracao"]);
       toast("Cargo e salário atualizados");
@@ -1445,41 +1504,52 @@ const VIEWS = {
   cargos() {
     if (!isAdmin()) return emptyState("Acesso restrito", "Somente a administradora vê o plano de cargos e salários.");
     const pessoasAt = ativos().sort(byNome);
-    const linhas = pessoasAt.map(c => { const r = remunDe(c.id); return { c, r, cg: r && cargoPlano(r.cargo_id), e: enquadramento(r) }; });
+    const linhas = pessoasAt.map(c => { const r = remunDe(c.id); return { c, r, cg: r && cargoPlano(r.cargo_id), e: enquadramento(r), ev: evolucao(c, r) }; });
     const folha = linhas.reduce((s, l) => s + (l.r?.salario_atual || 0), 0);
     const abaixo = linhas.filter(l => l.e.sit === "abaixo");
     const ajuste = abaixo.reduce((s, l) => s - l.e.dif, 0);
     const pendentes = linhas.filter(l => ["sem-cargo", "sem-salario", "sem-faixa"].includes(l.e.sit)).length;
     const ocup = id => linhas.filter(l => l.r?.cargo_id === id).length;
-    const cargos = [...S.cargos_plano].filter(cg => !F.setor || !cg.setor || cg.setor === F.setor)
-      .sort((a, b) => byNome(a, b) || (a.nivel || "").localeCompare(b.nivel || ""));
-    return `<div class="head"><div><h1>Cargos e salários</h1><p>Plano de cargos com a faixa salarial prevista e o enquadramento de cada colaborador. Só você vê esta aba.</p></div>
+    const cargos = [...S.cargos_plano].filter(cg => areaNoFiltro(cg.area)).sort(ordemCargo);
+    const grupos = [...AREAS_PLANO.map(([a]) => [a, cargos.filter(cg => cg.area === a)]), ["Outros", cargos.filter(cg => !AREAS_PLANO.some(([a]) => a === cg.area))]].filter(([, l]) => l.length);
+    return `<div class="head"><div><h1>Cargos e salários</h1><p>Plano de Cargos e Salários da AFLUX e o enquadramento de cada colaborador. Só você vê esta aba.</p></div>
         <div class="actions"><button type="button" class="btn primary" data-action="new-cargo">Novo cargo</button></div></div>
       ${seletorSetor()}
       <div class="kpis">
         <div class="kpi"><span>Folha atual</span><b class="num" style="font-size:1.35rem">${brl(folha)}</b><span>soma dos salários informados</span></div>
         <div class="kpi"><span>Abaixo do plano</span><b>${abaixo.length}</b><span>${abaixo.length ? brl(ajuste) + " por mês para enquadrar" : "ninguém abaixo do piso"}</span></div>
-        <div class="kpi"><span>Dentro do plano</span><b>${linhas.filter(l => l.e.sit === "dentro").length}</b><span>de ${linhas.length} pessoas</span></div>
+        <div class="kpi"><span>Aptos à evolução</span><b>${linhas.filter(l => l.ev.apto).length}</b><span>12 meses no cargo e avaliação acima de 85%</span></div>
         <div class="kpi"><span>Pendências</span><b>${pendentes}</b><span>sem cargo, salário ou valor no plano</span></div>
       </div>
+      <details class="panel cg-politica"><summary><h2>Política do plano</h2><span class="muted small">Apresentação, estrutura, critérios e regras</span></summary>
+        <div class="cg-politica-txt">
+          <p class="lbl">1. Apresentação e objetivos</p><p>O presente Plano de Cargos e Salários tem como objetivo estabelecer uma estrutura organizacional clara, promovendo transparência, equidade e valorização profissional. Visa orientar a progressão de carreira, as políticas de remuneração e o desenvolvimento dos colaboradores, assegurando coerência com as metas e valores da empresa.</p>
+          <p class="lbl">2. Estrutura organizacional</p><p><b>Diretoria Executiva → Coordenação → Analistas → Assistentes → Auxiliares → Estagiários.</b><br>Setores: Diretoria Executiva, Contábil/Fiscal, Departamento Pessoal e Atendimento.</p>
+          <p class="lbl">3. Política de cargos e salários</p><p>A política de cargos e salários tem como base critérios técnicos e de desempenho, sendo revisada de acordo com a evolução da empresa e o mercado de trabalho. O enquadramento salarial considera formação, tempo de experiência, responsabilidades e resultados obtidos.</p>
+          ${listaTexto("Admissão conforme compatibilidade técnica e cultural\nReajustes salariais baseados em desempenho e mérito\nPromoções mediante avaliação anual e cumprimento de metas\nTreinamentos e capacitações considerados como diferencial competitivo")}
+          <p class="lbl">4. Critérios de evolução profissional</p>
+          ${listaTexto("Tempo mínimo no cargo: 12 meses\nAvaliação de desempenho satisfatória (acima de 85%)\nParticipação em treinamentos e cursos de atualização\nCumprimento das metas e prazos definidos\nConduta ética e colaborativa com a equipe e clientes")}
+          <p class="lbl">5. Regras gerais</p><p>O presente plano poderá ser atualizado conforme a necessidade da empresa, mediante análise da Diretoria Executiva. Não há vigência fixa, mantendo-se válido até que nova versão seja aprovada.</p>
+        </div></details>
       <section class="panel"><header><h2>Plano de cargos</h2><span class="muted small">${S.cargos_plano.length} cargo(s)</span></header>
-        ${cargos.length ? `<div class="table-wrap"><table><thead><tr><th>Cargo</th><th>Nível</th><th>Setor</th><th>Salário previsto</th><th>Pessoas</th><th></th></tr></thead><tbody>
-          ${cargos.map(cg => `<tr><td><b>${esc(cg.nome)}</b>${cg.requisitos ? `<br><small class="muted">${esc(cg.requisitos)}</small>` : ""}</td><td>${esc(cg.nivel || "—")}</td>
-            <td>${cg.setor ? `<span class="tag">${esc(SETORES[cg.setor])}</span>` : `<span class="small muted">Qualquer</span>`}</td>
-            <td class="num">${cg.salario_min == null ? `<span class="small" style="color:var(--warn)">Definir valor</span>` : esc(faixaTxt(cg))}</td><td class="num">${ocup(cg.id)}</td>
-            <td><div class="actions"><button type="button" class="btn sm" data-action="edit-cargo" data-id="${esc(cg.id)}">Editar</button><button type="button" class="btn sm danger" data-action="del-cargo" data-id="${esc(cg.id)}">Excluir</button></div></td></tr>`).join("")}
-          </tbody></table></div>` : emptyState("Nenhum cargo no plano", "Cadastre os cargos com o salário previsto de cada um.", `<button type="button" class="btn sm primary" data-action="new-cargo">Novo cargo</button>`)}
+        ${grupos.length ? grupos.map(([area, l]) => `<p class="cg-area">${esc(area)}</p><div class="table-wrap"><table><thead><tr><th>Cargo</th><th>Nível</th><th>CBO</th><th>Salário previsto</th><th>Pessoas</th><th></th></tr></thead><tbody>
+          ${l.map(cg => `<tr class="click" data-action="ver-cargo" data-id="${esc(cg.id)}"><td><b>${esc(cg.nome)}</b>${cg.salario_obs ? `<br><small class="muted">${esc(cg.salario_obs)}</small>` : ""}</td><td>${esc(cg.nivel || "—")}</td><td class="num">${esc(cg.cbo || "—")}</td>
+            <td class="num" style="white-space:nowrap">${cg.salario_min == null ? (cg.salario_obs ? `<span class="small">Salário-mínimo</span>` : `<span class="small" style="color:var(--warn)">Definir valor</span>`) : esc(faixaTxt(cg))}</td><td class="num">${ocup(cg.id)}</td>
+            <td><div class="actions"><button type="button" class="btn sm" data-action="ver-cargo" data-id="${esc(cg.id)}">Ver</button><button type="button" class="btn sm" data-action="edit-cargo" data-id="${esc(cg.id)}">Editar</button><button type="button" class="btn sm danger" data-action="del-cargo" data-id="${esc(cg.id)}">Excluir</button></div></td></tr>`).join("")}
+          </tbody></table></div>`).join("")
+          : emptyState("Nenhum cargo no plano", "Rode o arquivo plano-cargos-aflux.sql no Supabase ou cadastre os cargos.", `<button type="button" class="btn sm primary" data-action="new-cargo">Novo cargo</button>`)}
       </section>
       <section class="panel"><header><h2>Enquadramento por colaborador</h2><span class="muted small">Salário previsto x salário atual</span></header>
-        ${linhas.length ? `<div class="table-wrap"><table><thead><tr><th>Colaborador</th><th>Cargo no plano</th><th>Salário previsto</th><th>Salário atual</th><th>Diferença</th><th>Situação</th><th></th></tr></thead><tbody>
-          ${linhas.map(({ c, r, cg, e }) => `<tr><td><div class="person">${avatar(c)}<div><b>${esc(c.nome)}</b><small>${esc(SETORES[c.setor])}</small></div></div></td>
-            <td>${cg ? esc(cg.nome) + (cg.nivel ? ` <small class="muted">· ${esc(cg.nivel)}</small>` : "") : `<span class="small muted">—</span>`}</td>
-            <td class="num">${cg ? esc(faixaTxt(cg)) : "—"}</td><td class="num"><b>${brl(r?.salario_atual)}</b></td>
+        ${linhas.length ? `<div class="table-wrap"><table><thead><tr><th>Colaborador</th><th>Cargo no plano</th><th>Salário previsto</th><th>Salário atual</th><th>Diferença</th><th>Situação</th><th>Evolução</th><th></th></tr></thead><tbody>
+          ${linhas.map(({ c, r, cg, e, ev }) => `<tr><td><div class="person">${avatar(c)}<div><b>${esc(c.nome)}</b><small>${esc(SETORES[c.setor])}</small></div></div></td>
+            <td>${cg ? esc(cg.nome) : `<span class="small muted">—</span>`}</td>
+            <td class="num" style="white-space:nowrap">${cg ? esc(faixaTxt(cg)) : "—"}</td><td class="num"><b>${brl(r?.salario_atual)}</b></td>
             <td class="num" style="font-weight:700;color:${e.dif < 0 ? "var(--bad)" : e.dif > 0 ? "var(--warn)" : "inherit"}">${e.dif == null ? "—" : e.dif === 0 ? "—" : (e.dif > 0 ? "+" : "−") + brl(Math.abs(e.dif))}</td>
             <td><span class="pill ${e.cls}">${e.txt}</span></td>
+            <td>${ev.apto ? `<span class="pill ok">Apto à evolução</span>` : ""}<small class="muted" style="display:block">${esc(ev.txt)}</small></td>
             <td><button type="button" class="btn sm" data-action="edit-remun" data-id="${esc(c.id)}">Editar</button></td></tr>`).join("")}
           </tbody></table></div>` : emptyState("Nenhum colaborador ativo", "Cadastre a equipe na aba Colaboradores.")}
-        <p class="small muted" style="margin-top:10px">Diferença em vermelho: quanto falta para o salário chegar ao piso do cargo. Em amarelo: quanto o salário está acima do teto.</p>
+        <p class="small muted" style="margin-top:10px">Diferença em vermelho: quanto falta para o salário chegar ao piso do cargo. Em amarelo: quanto está acima do teto. Evolução: o plano pede no mínimo 12 meses no cargo e avaliação de desempenho acima de 85% (nota final 8,5 de 10); treinamentos, metas e conduta são avaliados por você.</p>
       </section>`;
   },
 
@@ -1659,6 +1729,7 @@ const ACTIONS = {
   "edit-user": d => formUsuario(S.perfis.find(u => u.id === d.id)),
   "new-cargo": () => formCargo(),
   "edit-cargo": d => formCargo(cargoPlano(d.id)),
+  "ver-cargo": d => verCargo(cargoPlano(d.id)),
   "edit-remun": d => formRemuneracao(d.id),
   "del-cargo": d => {
     const cg = cargoPlano(d.id), n = S.remuneracao.filter(r => r.cargo_id === cg.id).length;
