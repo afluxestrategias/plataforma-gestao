@@ -1,0 +1,18 @@
+# Faz uma consulta simples ao banco (Supabase) a cada 3 dias.
+# No plano gratuito, o Supabase pausa projetos sem uso por cerca de 7 dias; esta consulta conta como uso.
+name: Manter banco ativo
+
+on:
+  schedule:
+    - cron: "0 12 */3 * *"
+  workflow_dispatch:
+
+jobs:
+  consultar:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Consultar o banco
+        run: |
+          curl -sS -f -o /dev/null -w "HTTP %{http_code}\n" \
+            "https://zgtpfwmqrbqntwmanabs.supabase.co/rest/v1/setores?select=codigo&limit=1" \
+            -H "apikey: sb_publishable_BwfnYK4HiHdYGRbX0ZeXZA_aEufOerC"
