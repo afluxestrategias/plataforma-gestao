@@ -279,6 +279,31 @@ dialog form { display: flex; flex-direction: column; max-height: calc(100vh - 40
 .cg-politica summary::-webkit-details-marker { display: none }
 .cg-politica summary::after { content: '▾'; color: var(--muted) } .cg-politica[open] summary::after { content: '▴' }
 .cg-politica-txt { display: flex; flex-direction: column; gap: 6px; margin-top: 12px } .cg-politica-txt .lbl { margin-top: 8px }
+/* bonificação */
+.bf-comp { border: 1px solid var(--line); border-radius: var(--r); overflow: hidden }
+.bf-cab { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 9px 14px; background: var(--surface-2) }
+.bf-comp:not(.on) .bf-cab { background: var(--surface) } .bf-comp:not(.on) .bf-cab .num { color: var(--muted) }
+.bf-cab label { display: flex; gap: 8px; align-items: center; font-weight: 700; cursor: pointer }
+.bf-cab input, .bf-chk input { width: 17px; height: 17px; accent-color: var(--accent) }
+.bf-cab .num { font-family: var(--display); font-weight: 600 }
+.bf-campos { padding: 12px 14px; display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px 12px }
+.bf-comp:not(.on) .bf-campos { display: none }
+.bf-campos .full, .bf-det { grid-column: 1 / -1 }
+.bf-det { font-size: .82rem; color: var(--muted) }
+.bf-chk { display: flex; gap: 8px; align-items: center; font-weight: 600; font-size: .9rem; cursor: pointer }
+.bf-partes { display: flex; flex-direction: column; gap: 8px }
+.bf-total { background: var(--accent-soft); border-radius: var(--r); padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap }
+.bf-total b { font-family: var(--display); font-size: 1.35rem; font-variant-numeric: tabular-nums }
+.bf-resumo { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: .88rem; color: var(--muted) } .bf-resumo b { color: var(--ink) }
+.bf-sec { font-family: var(--display); font-weight: 700; font-size: 1rem; margin-top: 6px }
+.bf-tags { display: flex; flex-wrap: wrap; gap: 4px }
+.bf-mat th, .bf-mat td { padding: 7px 8px; text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums }
+.bf-mat th:first-child, .bf-mat td:first-child { text-align: left; position: sticky; left: 0; background: var(--surface); z-index: 1 }
+.bf-mat td.bf-cel { cursor: pointer } .bf-mat td.bf-cel:hover { background: var(--surface-2) }
+.bf-mat td.bf-vazio { color: var(--line) }
+.bf-mat tfoot td { font-weight: 800; border-top: 2px solid var(--line); border-bottom: 0 }
+.bf-mat td.bf-sel, .bf-mat th.bf-sel { background: var(--accent-soft) }
+.bf-regras { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; font-size: .9rem } .bf-regras b { color: var(--accent) }
 /* evidências do período */
 .fb-cols { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 16px; align-items: start }
 .fb-form { display: grid; grid-template-columns: minmax(0, 1fr) 290px; gap: 18px; align-items: start }
@@ -371,6 +396,7 @@ dialog form { display: flex; flex-direction: column; max-height: calc(100vh - 40
       <button class="tab" data-action="go" data-view="desempenho"><svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Desempenho</button>
       <button class="tab" data-action="go" data-view="feedbacks"><svg viewBox="0 0 24 24"><path d="M20 15a2 2 0 0 1-2 2H8l-4 4V5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2z"/></svg>Feedbacks</button>
       <button class="tab" data-action="go" data-view="cargos" id="tabCargos" hidden><svg viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2M3 13h18"/></svg>Cargos e salários</button>
+      <button class="tab" data-action="go" data-view="bonificacao" id="tabBonif" hidden><svg viewBox="0 0 24 24"><rect x="3" y="8" width="18" height="13" rx="2"/><path d="M3 12.5h18M12 8v13M12 8C10.5 5 7 4 7 6.3S10 8 12 8zm0 0c1.5-3 5-4 5-1.7S14 8 12 8z"/></svg>Bonificação</button>
       <button class="tab" data-action="go" data-view="usuarios" id="tabUsuarios" hidden><svg viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>Usuários e acessos</button>
     </nav>
     <div class="side-foot">
@@ -396,10 +422,10 @@ dialog form { display: flex; flex-direction: column; max-height: calc(100vh - 40
 <script>
 const SETORES = { CONTABIL: "Contábil", FISCAL: "Fiscal", DP: "Departamento Pessoal", ATENDIMENTO: "Atendimento" };
 const TABELAS = ["setores", "gestores", "colaboradores", "disc", "avaliacoes", "feedbacks", "evidencias"];
-const S = { setores: [], gestores: [], colaboradores: [], disc: [], avaliacoes: [], feedbacks: [], evidencias: [], perfis: [], disc_convites: [], disc_adjetivos: [], cargos_plano: [], remuneracao: [] };
-let sb = null, me = null, carregado = false;
+const S = { setores: [], gestores: [], colaboradores: [], disc: [], avaliacoes: [], feedbacks: [], evidencias: [], perfis: [], disc_convites: [], disc_adjetivos: [], cargos_plano: [], remuneracao: [], bonificacoes: [] };
+let sb = null, me = null, carregado = false, bonifPendente = false;
 let view = "painel", perfilId = null;
-const F = { setor: "", busca: "", status: "", fbColab: "", fbTipo: "", ciclo: "", evDe: new Date(Date.now() - 90 * 864e5).toISOString().slice(0, 10), evAte: "" };
+const F = { setor: "", busca: "", status: "", fbColab: "", fbTipo: "", ciclo: "", evDe: new Date(Date.now() - 90 * 864e5).toISOString().slice(0, 10), evAte: "", bfAno: "", bfMes: "" };
 
 const FACTORS = {
   D: { nome: "Dominância", resumo: "Direto, decidido e orientado a resultados. Gosta de desafios, autonomia e de ver as coisas acontecerem.",
@@ -518,18 +544,21 @@ function aviso(titulo, texto, comSair = true) {
 const num = x => x == null ? null : Number(x);
 const doBanco = (t, r) => t === "disc" ? { ...r, D: r.d, I: r.i, S: r.s, C: r.c } : t === "avaliacoes" ? { ...r, media: Number(r.media) }
   : t === "cargos_plano" ? { ...r, salario_min: num(r.salario_min), salario_max: num(r.salario_max) }
-  : t === "remuneracao" ? { ...r, salario_atual: num(r.salario_atual) } : r;
+  : t === "remuneracao" ? { ...r, salario_atual: num(r.salario_atual) }
+  : t === "bonificacoes" ? { ...r, total: num(r.total), entradas: r.entradas || {}, valores: r.valores || {} } : r;
 function erroMsg(e) {
   if (e?.code === "42501" || /row-level security/i.test(e?.message || "")) return "Você não tem permissão para fazer isso.";
   if (e?.code === "23503") return "Esse registro está ligado a outro e não pode ser alterado assim.";
   return "Não foi possível salvar: " + (e?.message || "erro desconhecido") + ".";
 }
 async function carregar(tabelas = TABELAS) {
-  const lista = tabelas !== TABELAS ? tabelas : [...tabelas, "disc_adjetivos", ...(isAdmin() ? ["perfis", "disc_convites", "cargos_plano", "remuneracao"] : [])];
+  const lista = tabelas !== TABELAS ? tabelas : [...tabelas, "disc_adjetivos", ...(isAdmin() ? ["perfis", "disc_convites", "cargos_plano", "remuneracao", "bonificacoes"] : [])];
   const res = await Promise.all(lista.map(t => sb.from(t).select("*")));
   res.forEach((r, i) => {
     // a lista de adjetivos só existe depois de rodar o disc-adjetivos.sql; sem ela o relatório só não mostra esse gráfico
-    if (r.error) return lista[i] === "disc_adjetivos" ? null : toast("Não foi possível carregar " + lista[i] + ": " + r.error.message, true);
+    // a tabela de bonificações só existe depois de rodar o bonificacoes.sql; sem ela a aba mostra como criar
+    if (r.error) return lista[i] === "disc_adjetivos" ? null : lista[i] === "bonificacoes" ? (bonifPendente = true) : toast("Não foi possível carregar " + lista[i] + ": " + r.error.message, true);
+    if (lista[i] === "bonificacoes") bonifPendente = false;
     S[lista[i]] = r.data.map(x => doBanco(lista[i], x));
   });
   carregado = true; render();
@@ -567,8 +596,9 @@ async function entrar(user) {
   document.getElementById("mePapel").textContent = isAdmin() ? "Administradora · acesso total" : "Gestor · " + setoresVisiveis().map(k => SETORES[k]).join(", ");
   document.getElementById("tabUsuarios").hidden = !isAdmin();
   document.getElementById("tabCargos").hidden = !isAdmin();
+  document.getElementById("tabBonif").hidden = !isAdmin();
   const inicial = (location.hash || "").slice(1);
-  view = VIEWS[inicial] && !["perfil", "relatorio", "ficha", "fichafb"].includes(inicial) && (!["usuarios", "cargos"].includes(inicial) || isAdmin()) ? inicial : "painel";
+  view = VIEWS[inicial] && !["perfil", "relatorio", "ficha", "fichafb"].includes(inicial) && (!["usuarios", "cargos", "bonificacao"].includes(inicial) || isAdmin()) ? inicial : "painel";
   F.setor = setoresVisiveis().length === 1 ? setoresVisiveis()[0] : "";
   tela("telaApp"); render();
   carregar();
@@ -1208,6 +1238,209 @@ function linksDisc() {
 }
 
 /* ---------- telas ---------- */
+/* ---------- bonificação ---------- */
+// Mesmas regras da planilha CONTROLE DE BONIFICAÇÕES. Cada pessoa tem as partes que se aplicam a ela;
+// o lançamento de um mês nasce com as partes e os valores unitários do último mês da pessoa.
+const MESES = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+const compDe = (ano, mes) => `${ano}-${String(mes).padStart(2, "0")}-01`;
+const fmtComp = c => { const [a, m] = (c || "").split("-"); return a ? MESES[+m - 1] + "/" + a : "—"; };
+const byCompDesc = (a, b) => b.competencia.localeCompare(a.competencia);
+const z0 = v => Number(v) || 0;
+const numBR = (v, d = 0) => v == null || Number.isNaN(v) ? "—" : Number(v).toLocaleString("pt-BR", { minimumFractionDigits: d, maximumFractionDigits: d });
+const pctBR = v => numBR(v * 100, v * 100 % 1 ? 1 : 0) + "%";
+const campoNum = v => v == null ? "" : String(v).replace(".", ",");
+// tipos de campo: q quantidade, v valor em R$, p percentual, t texto, b sim/não
+const BONIF = {
+  contabil: { nome: "Contábil", campos: [["erros", "Erros coletivos", "q", 0], ["total_empresas", "Total de empresas", "q"], ["fechadas", "Empresas fechadas", "q"],
+      ["ativas", "Ativas finalizadas", "q"], ["inativas", "Inativas finalizadas", "q"], ["base", "Valor base por ativa", "v", 3], ["inc100", "Acréscimo com 100%", "v", 4],
+      ["inc75", "Acréscimo com 75%", "v", 2], ["unit_inativas", "Valor por inativa", "v", 3], ["coletiva", "Recebe a bonificação coletiva", "b", true]],
+    coletivos: ["erros", "total_empresas", "fechadas"],
+    calc(e) {
+      const tot = z0(e.total_empresas), pct = tot ? z0(e.fechadas) / tot : 0, er = z0(e.erros);
+      const col = e.coletiva !== false && pct >= 1 ? (er > 10 ? 0 : er > 5 ? 100 : er > 0 ? 150 : 200) : 0;
+      const base = z0(e.base), unit = pct >= 1 ? base + z0(e.inc100) : pct >= .75 ? base + z0(e.inc75) : pct >= .5 ? base : 0;
+      const va = z0(e.ativas) * unit, vi = z0(e.inativas) * z0(e.unit_inativas);
+      return { valor: col + va + vi, det: `Fechamento ${tot ? pctBR(pct) : "—"} · coletiva ${brl(col)} · ${numBR(z0(e.ativas))} ativa(s) × ${brl(unit)} · ${numBR(z0(e.inativas))} inativa(s) × ${brl(z0(e.unit_inativas))}` };
+    } },
+  fiscal: { nome: "Fiscal", campos: [["simples", "Simples Nacional", "q"], ["presumido", "Lucro Presumido", "q"], ["real", "Lucro Real", "q"], ["inativas", "Inativas", "q"],
+      ["t_simples", "Valor por Simples", "v", 3], ["t_presumido", "Valor por Presumido", "v", 25], ["t_real", "Valor por Real", "v", 50], ["t_inativas", "Valor por inativa", "v", 3]],
+    calc(e) {
+      const ks = ["simples", "presumido", "real", "inativas"];
+      return { valor: ks.reduce((s, k) => s + z0(e[k]) * z0(e["t_" + k]), 0), det: `${numBR(ks.reduce((s, k) => s + z0(e[k]), 0))} empresa(s)` };
+    } },
+  onvio: { nome: "Onvio", campos: [["valor", "Valor", "v", 200]], calc: e => ({ valor: z0(e.valor), det: "" }) },
+  marketing: { nome: "Marketing", campos: [["videos", "Vídeos postados", "q"], ["unit", "Valor por vídeo", "v", 10]],
+    calc: e => ({ valor: z0(e.videos) * z0(e.unit), det: `${numBR(z0(e.videos))} vídeo(s) × ${brl(z0(e.unit))}` }) },
+  inadimplencia: { nome: "Inadimplência", campos: [["pct", "Inadimplência (%)", "p"]],
+    calc(e) {
+      if (e.pct == null) return { valor: 0, det: "Informe o percentual de inadimplência do mês." };
+      if (e.pct > 10) return { valor: 0, det: "Acima de 10%: sem bonificação." };
+      const faixa = Math.max(1, Math.floor(e.pct + 1e-9));
+      return { valor: 250 - 20 * faixa, det: `Faixa de ${faixa}% · tabela: 1% = R$ 230 … 10% = R$ 50 (R$ 20 a menos por ponto)` };
+    } },
+  carne_meis: { nome: "Carnê-leão, MEIs e rural", campos: [["carne", "Carnê-leão", "q"], ["meis", "Acompanhamento MEIs", "q"], ["rural", "Acompanhamento rural", "q"], ["unit", "Valor por cliente", "v", 20]],
+    calc: e => { const q = z0(e.carne) + z0(e.meis) + z0(e.rural); return { valor: q * z0(e.unit), det: `${numBR(q)} cliente(s) × ${brl(z0(e.unit))}` }; } },
+  licitacoes: { nome: "Licitações", campos: [["qtd", "Licitações", "q"], ["unit", "Valor por licitação", "v", 50], ["descricao", "Quais", "t"]],
+    calc: e => ({ valor: z0(e.qtd) * z0(e.unit), det: `${numBR(z0(e.qtd))} × ${brl(z0(e.unit))}` }) },
+  societario: { nome: "Societário", campos: [["empresas", "Empresas (aberturas, alterações e baixas)", "q"], ["caepf", "CAEPF", "q"], ["unit_emp", "Valor por empresa", "v", 55],
+      ["unit_caepf", "Valor por CAEPF", "v", 20], ["relacao", "Relação de empresas", "t"]],
+    calc: e => ({ valor: z0(e.empresas) * z0(e.unit_emp) + z0(e.caepf) * z0(e.unit_caepf), det: `${numBR(z0(e.empresas))} empresa(s) × ${brl(z0(e.unit_emp))} · ${numBR(z0(e.caepf))} CAEPF × ${brl(z0(e.unit_caepf))}` }) },
+  ir: { nome: "Imposto de Renda", campos: [["valor_ir", "Valor das declarações", "v"], ["pct", "Percentual (%)", "p", 15]],
+    calc: e => ({ valor: Math.round(z0(e.valor_ir) * z0(e.pct)) / 100, det: `${numBR(z0(e.pct), 1)}% de ${brl(z0(e.valor_ir))}` }) },
+  fixo: { nome: "Valor fixo", campos: [["valor", "Valor", "v"], ["descricao", "Descrição", "t"]], calc: e => ({ valor: z0(e.valor), det: e.descricao || "" }) },
+  ajuste: { nome: "Ajuste", campos: [["valor", "Valor (use − para desconto)", "v"], ["motivo", "Motivo", "t"]], calc: e => ({ valor: z0(e.valor), det: e.motivo || "" }) },
+};
+function calcBonif(entradas) {
+  const valores = {}, det = {};
+  for (const [p, e] of Object.entries(entradas || {})) {
+    if (!BONIF[p]) continue;
+    const r = BONIF[p].calc(e || {});
+    valores[p] = Math.round(r.valor * 100) / 100; det[p] = r.det;
+  }
+  return { valores, det, total: Math.round(Object.values(valores).reduce((s, v) => s + v, 0) * 100) / 100 };
+}
+const FOLHA_CAMPOS = [["salario_bruto", "Salário bruto"], ["salario_liquido", "Salário líquido"], ["unimed", "Valor Unimed"], ["auxilio", "Auxílio atividade física"]];
+const HORAS_CAMPOS = [["dias_uteis", "Dias úteis"], ["faltas", "Faltas e atestados (dias)"], ["ferias", "Dias de férias"], ["horas_normais", "Horas normais"], ["horas_extras", "Horas extras"]];
+function totaisFolha(total, f) {
+  if (!f || (f.salario_bruto == null && f.salario_liquido == null)) return null;
+  const extra = z0(f.unimed) + z0(f.auxilio);
+  return { bruto: f.salario_bruto == null ? null : total + f.salario_bruto + extra, liquido: f.salario_liquido == null ? null : total + f.salario_liquido + extra };
+}
+function totaisHoras(h, entradas) {
+  if (!h || (h.horas_normais == null && h.horas_extras == null)) return null;
+  const tot = z0(h.horas_normais) + z0(h.horas_extras), bal = z0(entradas?.contabil?.ativas) + z0(entradas?.contabil?.inativas);
+  return { total: tot, balancetes: bal, porBal: bal ? tot / bal : null };
+}
+const bonifDe = cid => S.bonificacoes.filter(b => b.colaborador_id === cid).sort(byCompDesc);
+// partes e valores unitários do último lançamento da pessoa (sem as quantidades do mês)
+function modeloBonif(cid, comp) {
+  const ult = bonifDe(cid).find(b => b.competencia < comp) || bonifDe(cid)[0];
+  const ent = {};
+  if (ult) for (const [p, o] of Object.entries(ult.entradas || {})) {
+    if (!BONIF[p] || p === "ajuste") continue;
+    ent[p] = {};
+    for (const [k, , t] of BONIF[p].campos) if (t === "v" || t === "b" || (p === "ir" && k === "pct") || (p === "fixo" && t === "t")) ent[p][k] = o?.[k];
+  } else if (["CONTABIL", "FISCAL"].includes(colab(cid)?.setor)) { ent.contabil = {}; ent.fiscal = {}; }
+  // os números coletivos do contábil (erros, total e fechadas) são iguais para todos no mês
+  const outro = S.bonificacoes.find(b => b.competencia === comp && b.entradas?.contabil?.total_empresas != null);
+  if (ent.contabil && outro) BONIF.contabil.coletivos.forEach(k => ent.contabil[k] = outro.entradas.contabil[k]);
+  const folha = ult?.folha ? { salario_bruto: ult.folha.salario_bruto, unimed: ult.folha.unimed, auxilio: ult.folha.auxilio } : null;
+  return { entradas: ent, folha };
+}
+function bonifSel() {
+  const anos = [...new Set(S.bonificacoes.map(b => +b.competencia.slice(0, 4)))];
+  const ultima = [...S.bonificacoes].sort(byCompDesc)[0]?.competencia;
+  const ano = Number(F.bfAno) || (ultima ? +ultima.slice(0, 4) : new Date().getFullYear());
+  const doAno = S.bonificacoes.filter(b => +b.competencia.slice(0, 4) === ano).sort(byCompDesc)[0];
+  const mes = Number(F.bfMes) || (doAno ? +doAno.competencia.slice(5, 7) : new Date().getMonth() + 1);
+  return { ano, mes, anos: [...new Set([...anos, ano, new Date().getFullYear()])].sort() };
+}
+
+function formBonificacao(b, cid, comp) {
+  const novo = !b?.id;
+  if (novo) {
+    const sel = bonifSel();
+    comp = comp || compDe(sel.ano, sel.mes);
+    b = cid ? { colaborador_id: cid, competencia: comp, ...modeloBonif(cid, comp), horas: null } : { competencia: comp, entradas: {} };
+  }
+  if (!S.colaboradores.length) return toast("Cadastre os colaboradores antes de lançar bonificações.", true);
+  const [ano, mes] = b.competencia.split("-").map(Number);
+  const campo = (p, [k, rot, t, def], o) => {
+    const v = o && k in o ? o[k] : def, nm = `e.${p}.${k}`, id = `bf-${p}-${k}`;
+    if (t === "b") return `<label class="bf-chk full"><input type="checkbox" name="${nm}" ${v !== false ? "checked" : ""}> ${esc(rot)}</label>`;
+    if (t === "t") return `<div class="field full"><label for="${id}">${esc(rot)}</label><input type="text" id="${id}" name="${nm}" value="${esc(v ?? "")}"></div>`;
+    return `<div class="field"><label for="${id}">${esc(rot)}</label><input type="text" inputmode="decimal" id="${id}" name="${nm}" value="${esc(t === "v" ? valorCampo(v ?? null) : campoNum(v ?? null))}"></div>`;
+  };
+  const partes = Object.entries(BONIF).map(([p, d]) => { const on = p in (b.entradas || {});
+    return `<div class="bf-comp ${on ? "on" : ""}" data-parte="${p}"><div class="bf-cab"><label><input type="checkbox" name="parte" value="${p}" ${on ? "checked" : ""}> ${esc(d.nome)}</label><span class="num" id="bfv-${p}">—</span></div>
+      <div class="bf-campos">${d.campos.map(c => campo(p, c, b.entradas?.[p])).join("")}<p class="bf-det" id="bfd-${p}"></p></div></div>`; }).join("");
+  const f = b.folha || {}, h = b.horas || {};
+  formBonificacao.atual = b;
+  openModal({
+    title: novo ? "Lançar bonificação" : `Bonificação · ${nomeDe(b.colaborador_id)}`, wide: true,
+    body: `<div class="form-grid">
+      <div class="field full"><label class="req" for="bf-colab">Colaborador</label>${novo ? `<select id="bf-colab" name="colaborador_id">${colabOptions(b.colaborador_id)}</select>` : `<input type="text" id="bf-colab" value="${esc(nomeDe(b.colaborador_id))}" readonly>`}</div>
+      <div class="field"><label class="req" for="bf-mes">Competência</label><select id="bf-mes" name="mes">${MESES.map((m, i) => `<option value="${i + 1}" ${i + 1 === mes ? "selected" : ""}>${m}</option>`).join("")}</select></div>
+      <div class="field"><label class="req" for="bf-ano">Ano</label><input type="number" id="bf-ano" name="ano" min="2000" max="2100" value="${ano}"></div>
+    </div>
+    ${b.colaborador_id ? `<p class="small muted">${novo && bonifDe(b.colaborador_id).length ? "As partes e os valores unitários vieram do último lançamento da pessoa. Preencha as quantidades do mês." : "Marque as partes da bonificação que valem para esta pessoa."}</p>` : `<p class="small muted">Escolha o colaborador para carregar as partes do último lançamento dele.</p>`}
+    <p class="bf-sec">Partes da bonificação</p>
+    <div class="bf-partes">${partes}</div>
+    <div class="bf-total"><span>Bonificação de ${esc(MESES[mes - 1].toLowerCase())}</span><b id="bf-total">—</b></div>
+    <p class="bf-sec">Folha do mês <span class="small muted" style="font-family:var(--body);font-weight:400">· opcional</span></p>
+    <div class="form-grid">${FOLHA_CAMPOS.map(([k, rot]) => `<div class="field"><label for="bf-f-${k}">${rot}</label><input type="text" inputmode="decimal" id="bf-f-${k}" name="f.${k}" value="${valorCampo(f[k] ?? null)}"></div>`).join("")}
+      <div class="field full"><label for="bf-f-bh">Fechamento do banco de horas</label><input type="text" id="bf-f-bh" name="f.banco_horas" value="${esc(f.banco_horas || "")}" placeholder="Ex.: (00:31)"></div></div>
+    <div class="bf-resumo" id="bf-folha"></div>
+    <p class="bf-sec">Horas do mês <span class="small muted" style="font-family:var(--body);font-weight:400">· opcional</span></p>
+    <div class="form-grid">${HORAS_CAMPOS.map(([k, rot]) => `<div class="field"><label for="bf-h-${k}">${rot}</label><input type="text" inputmode="decimal" id="bf-h-${k}" name="h.${k}" value="${esc(campoNum(h[k] ?? null))}"></div>`).join("")}</div>
+    <div class="bf-resumo" id="bf-horas"></div>
+    <div class="field"><label for="bf-obs">Observações</label><textarea id="bf-obs" name="observacoes">${esc(b.observacoes)}</textarea></div>`,
+    handler: async fd => {
+      const r = lerBonif();
+      if (r.erro) return formErro(r.erro);
+      const colaborador_id = novo ? fd.get("colaborador_id") : b.colaborador_id;
+      const a = Number(fd.get("ano")), m = Number(fd.get("mes"));
+      if (!colaborador_id) return formErro("Escolha o colaborador.");
+      if (!(a >= 2000 && a <= 2100)) return formErro("Informe o ano da competência.");
+      if (!Object.keys(r.entradas).length) return formErro("Marque ao menos uma parte da bonificação.");
+      const dados = { colaborador_id, competencia: compDe(a, m), entradas: r.entradas, valores: r.valores, total: r.total, folha: r.folha, horas: r.horas,
+        observacoes: (fd.get("observacoes") || "").trim() || null, atualizado_em: new Date().toISOString() };
+      const { error } = novo ? await sb.from("bonificacoes").insert(dados) : await sb.from("bonificacoes").update(dados).eq("id", b.id);
+      if (error) {
+        if (error.code === "23505") return formErro(`${nomeDe(colaborador_id)} já tem bonificação lançada em ${fmtComp(dados.competencia)}. Feche e use “Editar” nesse mês.`);
+        toast(erroMsg(error), true); return false;
+      }
+      F.bfAno = String(a); F.bfMes = String(m);
+      await carregar(["bonificacoes"]);
+      toast(`Bonificação salva · ${brl(r.total)}`);
+    }
+  });
+  atualizarBonif();
+}
+// lê o formulário aberto e calcula
+function lerBonif() {
+  const fd = new FormData(mForm), el = n => mForm.elements[n];
+  const ler = s => lerValor(String(s || "").replace(/−/g, "-"));
+  const entradas = {}; let erro = null;
+  for (const p of fd.getAll("parte")) {
+    entradas[p] = {};
+    for (const [k, rot, t] of BONIF[p].campos) {
+      const nm = `e.${p}.${k}`;
+      if (t === "b") entradas[p][k] = !!el(nm)?.checked;
+      else if (t === "t") entradas[p][k] = (fd.get(nm) || "").trim() || null;
+      else { const v = ler(fd.get(nm)); if (Number.isNaN(v)) erro ??= `Confira o campo “${rot}” em ${BONIF[p].nome}.`; entradas[p][k] = Number.isNaN(v) ? null : v; }
+    }
+  }
+  const grupo = (campos, pre) => { const o = {}; for (const [k, rot] of campos) { const v = ler(fd.get(pre + k)); if (Number.isNaN(v)) erro ??= `Confira o campo “${rot}”.`; else if (v != null) o[k] = v; } return o; };
+  const folha = grupo(FOLHA_CAMPOS, "f."), horas = grupo(HORAS_CAMPOS, "h.");
+  const bh = (fd.get("f.banco_horas") || "").trim(); if (bh) folha.banco_horas = bh;
+  const c = calcBonif(entradas);
+  return { entradas, ...c, folha: Object.keys(folha).length ? folha : null, horas: Object.keys(horas).length ? horas : null, erro };
+}
+function atualizarBonif() {
+  const r = lerBonif();
+  mForm.querySelectorAll(".bf-comp").forEach(div => {
+    const p = div.dataset.parte, on = p in r.entradas;
+    div.classList.toggle("on", on);
+    document.getElementById("bfv-" + p).textContent = on ? brl(r.valores[p]) : "—";
+    document.getElementById("bfd-" + p).textContent = on ? r.det[p] || "" : "";
+  });
+  document.getElementById("bf-total").textContent = brl(r.total);
+  const tf = totaisFolha(r.total, r.folha), th = totaisHoras(r.horas, r.entradas);
+  document.getElementById("bf-folha").innerHTML = tf ? `<span>Total bruto <b>${brl(tf.bruto)}</b></span><span>Total líquido <b>${brl(tf.liquido)}</b></span><span>bonificação + salário + Unimed + auxílio</span>` : "";
+  document.getElementById("bf-horas").innerHTML = th ? `<span>Horas total <b>${numBR(th.total, 2)}</b></span>${th.balancetes ? `<span>Balancetes <b>${numBR(th.balancetes)}</b></span><span>Horas por balancete <b>${numBR(th.porBal, 2)}</b></span>` : ""}` : "";
+}
+mForm.addEventListener("input", e => {
+  if (!document.getElementById("bf-total")) return;
+  // num lançamento novo, trocar o colaborador carrega as partes do último mês dele
+  if (e.target.name === "colaborador_id" && !formBonificacao.atual?.id) {
+    const fd = new FormData(mForm);
+    return formBonificacao(null, e.target.value || undefined, compDe(Number(fd.get("ano")) || new Date().getFullYear(), Number(fd.get("mes")) || 1));
+  }
+  atualizarBonif();
+});
+const tagsBonif = b => `<div class="bf-tags">${Object.keys(BONIF).filter(p => p in (b.entradas || {})).map(p => `<span class="tag" title="${esc(BONIF[p].nome)}">${esc(BONIF[p].nome)} ${brl(b.valores?.[p] ?? calcBonif({ [p]: b.entradas[p] }).total)}</span>`).join("")}</div>`;
+
 const VIEWS = {
   painel() {
     const at = ativos();
@@ -1553,6 +1786,65 @@ const VIEWS = {
       </section>`;
   },
 
+  bonificacao() {
+    if (!isAdmin()) return emptyState("Acesso restrito", "Somente a administradora vê as bonificações.");
+    const cab = `<div class="head"><div><h1>Bonificação</h1><p>Cálculo mensal da bonificação de cada pessoa, com as regras da planilha de controle. Só você vê esta aba.</p></div>
+        <div class="actions"><button type="button" class="btn primary" data-action="new-bonif" ${bonifPendente ? "disabled" : ""}>Lançar bonificação</button></div></div>`;
+    if (bonifPendente) return cab + `<section class="panel">${emptyState("Falta criar a tabela de bonificações no banco",
+      "No Supabase, abra o SQL Editor e rode o arquivo supabase/bonificacoes.sql. Para trazer o histórico de 2026 da planilha, rode depois o bonificacoes-historico-2026.sql. Em seguida, recarregue esta página.")}</section>`;
+    const { ano, mes, anos } = bonifSel();
+    const comp = compDe(ano, mes);
+    const doAno = S.bonificacoes.filter(b => +b.competencia.slice(0, 4) === ano && noEscopo(b.colaborador_id));
+    const doMes = doAno.filter(b => b.competencia === comp).sort((a, b) => byNome(colab(a.colaborador_id), colab(b.colaborador_id)));
+    const comLanc = new Set(S.bonificacoes.map(b => b.colaborador_id));
+    const pendentes = ativos().filter(c => comLanc.has(c.id) && !doMes.some(b => b.colaborador_id === c.id)).sort(byNome);
+    const totMes = doMes.reduce((s, b) => s + b.total, 0), totAno = doAno.reduce((s, b) => s + b.total, 0);
+    const mesesCom = new Set(doAno.map(b => +b.competencia.slice(5, 7)));
+    const pessoasAno = [...new Set(doAno.map(b => b.colaborador_id))].map(colab).filter(Boolean).sort(byNome);
+    const cel = (cid, m) => { const b = doAno.find(x => x.colaborador_id === cid && x.competencia === compDe(ano, m));
+      return b ? `<td class="bf-cel ${m === mes ? "bf-sel" : ""}" data-action="edit-bonif" data-id="${esc(b.id)}" title="${esc(fmtComp(b.competencia))}">${numBR(b.total, 2)}</td>`
+        : `<td class="bf-cel bf-vazio ${m === mes ? "bf-sel" : ""}" data-action="new-bonif" data-id="${esc(cid)}" data-comp="${compDe(ano, m)}" title="Lançar ${MESES[m - 1].toLowerCase()}">—</td>`; };
+    const linhaMes = b => { const c = colab(b.colaborador_id), tf = totaisFolha(b.total, b.folha), th = totaisHoras(b.horas, b.entradas);
+      return `<tr><td><div class="person">${avatar(c)}<div><b>${esc(c?.nome)}</b><small>${esc(SETORES[c?.setor] || "")}</small></div></div></td>
+        <td>${tagsBonif(b)}</td><td class="num"><b>${brl(b.total)}</b></td><td class="num">${tf?.bruto != null ? brl(tf.bruto) : "—"}</td><td class="num">${tf?.liquido != null ? brl(tf.liquido) : "—"}</td>
+        <td class="num">${th?.porBal != null ? numBR(th.porBal, 2) : "—"}</td>
+        <td><div class="actions"><button type="button" class="btn sm" data-action="edit-bonif" data-id="${esc(b.id)}">Editar</button><button type="button" class="btn sm danger" data-action="del-bonif" data-id="${esc(b.id)}">Excluir</button></div></td></tr>`; };
+    return `${cab}
+      ${seletorSetor()}
+      <div class="toolbar"><select data-filter="bfAno" aria-label="Ano">${anos.map(a => `<option value="${a}" ${a === ano ? "selected" : ""}>${a}</option>`).join("")}</select>
+        <div class="scope" role="group" aria-label="Mês">${MESES.map((m, i) => `<button type="button" class="chip" data-action="bf-mes" data-mes="${i + 1}" aria-pressed="${i + 1 === mes}">${m.slice(0, 3)}${mesesCom.has(i + 1) ? " •" : ""}</button>`).join("")}</div></div>
+      <div class="kpis">
+        <div class="kpi"><span>Bonificação de ${MESES[mes - 1].toLowerCase()}</span><b class="num" style="font-size:1.35rem">${brl(totMes)}</b><span>${doMes.length} pessoa(s) lançada(s)</span></div>
+        <div class="kpi"><span>Média por pessoa no mês</span><b class="num" style="font-size:1.35rem">${doMes.length ? brl(totMes / doMes.length) : "—"}</b><span>entre quem foi lançado</span></div>
+        <div class="kpi"><span>Acumulado em ${ano}</span><b class="num" style="font-size:1.35rem">${brl(totAno)}</b><span>${mesesCom.size} mês(es) com lançamento</span></div>
+        <div class="kpi"><span>Faltam lançar</span><b>${pendentes.length}</b><span>pessoas ativas que já recebem bonificação</span></div>
+      </div>
+      <section class="panel"><header><h2>${MESES[mes - 1]} de ${ano}</h2><span class="muted small">Clique em Editar para ver o cálculo completo</span></header>
+        ${doMes.length || pendentes.length ? `<div class="table-wrap"><table><thead><tr><th>Colaborador</th><th>Composição</th><th>Bonificação</th><th>Total bruto</th><th>Total líquido</th><th>Horas/balancete</th><th></th></tr></thead><tbody>
+          ${doMes.map(linhaMes).join("")}
+          ${pendentes.map(c => `<tr><td><div class="person">${avatar(c)}<div><b>${esc(c.nome)}</b><small>${esc(SETORES[c.setor])}</small></div></div></td>
+            <td colspan="5"><span class="pill warn">Não lançado</span></td><td><button type="button" class="btn sm primary" data-action="new-bonif" data-id="${esc(c.id)}" data-comp="${comp}">Lançar</button></td></tr>`).join("")}
+          </tbody>${doMes.length ? `<tfoot><tr><td><b>Total</b></td><td></td><td class="num"><b>${brl(totMes)}</b></td><td colspan="4"></td></tr></tfoot>` : ""}</table></div>`
+          : emptyState("Nenhuma bonificação neste mês", "Lance a bonificação de cada pessoa. A partir do segundo mês, o lançamento já vem com as partes e os valores do mês anterior.", `<button type="button" class="btn sm primary" data-action="new-bonif" data-comp="${comp}">Lançar bonificação</button>`)}
+      </section>
+      <section class="panel"><header><h2>Relação de bonificação ${ano}</h2><span class="muted small">Clique num mês para lançar ou editar</span></header>
+        ${pessoasAno.length ? `<div class="table-wrap"><table class="bf-mat"><thead><tr><th>Colaborador</th>${MESES.map((m, i) => `<th class="${i + 1 === mes ? "bf-sel" : ""}">${m.slice(0, 3)}</th>`).join("")}<th>Total</th></tr></thead><tbody>
+          ${pessoasAno.map(c => `<tr><td><b>${esc(c.nome.split(" ")[0])}</b> <small class="muted">${esc(c.nome.split(" ").slice(1).join(" "))}</small></td>${MESES.map((_, i) => cel(c.id, i + 1)).join("")}
+            <td><b>${numBR(doAno.filter(b => b.colaborador_id === c.id).reduce((s, b) => s + b.total, 0), 2)}</b></td></tr>`).join("")}
+          </tbody><tfoot><tr><td>Total</td>${MESES.map((_, i) => { const t = doAno.filter(b => b.competencia === compDe(ano, i + 1)); return `<td class="${i + 1 === mes ? "bf-sel" : ""}">${t.length ? numBR(t.reduce((s, b) => s + b.total, 0), 2) : "—"}</td>`; }).join("")}<td>${numBR(totAno, 2)}</td></tr></tfoot></table></div>`
+          : emptyState("Nenhum lançamento em " + ano, "Os lançamentos do ano aparecem aqui, mês a mês.")}
+      </section>
+      <details class="panel cg-politica"><summary><h2>Regras de cálculo</h2><span class="muted small">As mesmas da planilha de controle</span></summary>
+        <div class="bf-regras">
+          <p><b>Contábil.</b> Percentual de fechamento = empresas fechadas ÷ total de empresas. Bonificação coletiva só com 100% fechado: R$ 200 sem erros, R$ 150 com 1 a 5 erros, R$ 100 com 6 a 10 erros e nada acima de 10. Cada empresa ativa finalizada vale o valor base (R$ 3 ou R$ 6, conforme o cargo) mais R$ 4 com 100% fechado, mais R$ 2 com 75% ou mais, só o valor base com 50% ou mais, e nada abaixo de 50%. Cada inativa finalizada vale R$ 3.</p>
+          <p><b>Fiscal.</b> Quantidade de empresas de cada regime vezes o valor do regime: Simples e inativas R$ 3 ou R$ 5 (conforme o cargo), Presumido R$ 25 e Real R$ 50.</p>
+          <p><b>Inadimplência.</b> 1% ou menos = R$ 230, e R$ 20 a menos a cada ponto, até 10% = R$ 50. Acima de 10%, nada.</p>
+          <p><b>Societário.</b> R$ 55 por empresa (abertura, alteração ou baixa) e R$ 20 por CAEPF. <b>Marketing:</b> R$ 10 por vídeo. <b>Licitações:</b> R$ 50 cada. <b>Carnê-leão, MEIs e rural:</b> valor por cliente acompanhado. <b>Imposto de Renda:</b> percentual sobre o valor das declarações. <b>Onvio</b> e <b>valor fixo</b>: valor informado.</p>
+          <p><b>Ajuste</b> serve para descontos ou valores combinados à parte; informe o motivo. Total bruto e líquido = bonificação + salário (bruto ou líquido) + Unimed + auxílio atividade física. Horas por balancete = horas totais ÷ (ativas + inativas finalizadas).</p>
+          <p class="small muted">Os valores unitários ficam em cada lançamento. Se uma regra mudar (por exemplo, o valor base de um cargo), altere no lançamento do mês e os meses seguintes já nascem com o valor novo.</p>
+        </div></details>`;
+  },
+
   usuarios() {
     if (!isAdmin()) return emptyState("Acesso restrito", "Somente administradores gerenciam usuários.");
     const l = [...S.perfis].sort(byNome);
@@ -1731,6 +2023,17 @@ const ACTIONS = {
   "edit-cargo": d => formCargo(cargoPlano(d.id)),
   "ver-cargo": d => verCargo(cargoPlano(d.id)),
   "edit-remun": d => formRemuneracao(d.id),
+  "new-bonif": d => formBonificacao(null, d.id, d.comp),
+  "edit-bonif": d => formBonificacao(S.bonificacoes.find(b => b.id === d.id)),
+  "bf-mes": d => { F.bfMes = d.mes; render(); },
+  "del-bonif": d => {
+    const b = S.bonificacoes.find(x => x.id === d.id);
+    confirmar("Excluir bonificação", `<p>Excluir a bonificação de <b>${esc(nomeDe(b.colaborador_id))}</b> em ${esc(fmtComp(b.competencia))} (${brl(b.total)})? Isso não pode ser desfeito.</p>`, "Excluir", async () => {
+      const { error } = await sb.from("bonificacoes").delete().eq("id", b.id);
+      if (error) { toast(erroMsg(error), true); return false; }
+      await carregar(["bonificacoes"]); toast("Bonificação excluída"); return true;
+    });
+  },
   "del-cargo": d => {
     const cg = cargoPlano(d.id), n = S.remuneracao.filter(r => r.cargo_id === cg.id).length;
     confirmar("Excluir cargo", `<p>Excluir <b>${esc(cg.nome)}</b> do plano?${n ? ` As ${n} pessoa(s) neste cargo ficam sem cargo no plano, mas o salário atual delas é mantido.` : ""}</p>`,
