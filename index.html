@@ -303,6 +303,11 @@ dialog form { display: flex; flex-direction: column; max-height: calc(100vh - 40
 .bf-mat td.bf-vazio { color: var(--line) }
 .bf-mat tfoot td { font-weight: 800; border-top: 2px solid var(--line); border-bottom: 0 }
 .bf-mat td.bf-sel, .bf-mat th.bf-sel { background: var(--accent-soft) }
+.bf-adv { border: 1px solid var(--line); border-radius: var(--r); padding: 10px 14px; display: flex; flex-direction: column; gap: 8px }
+.bf-adv.on { border-color: var(--bad); border-width: 2px } .bf-adv.on .bf-chk { color: var(--bad) }
+.bf-adv:not(.on) .field { display: none }
+.bf-total.adv { background: var(--surface-2) } .bf-total.adv b { color: var(--bad) }
+.bf-mat td.bf-adv-cel { color: var(--bad); font-weight: 700 }
 .bf-regras { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; font-size: .9rem } .bf-regras b { color: var(--accent) }
 /* evidências do período */
 .fb-cols { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 16px; align-items: start }
@@ -545,7 +550,7 @@ const num = x => x == null ? null : Number(x);
 const doBanco = (t, r) => t === "disc" ? { ...r, D: r.d, I: r.i, S: r.s, C: r.c } : t === "avaliacoes" ? { ...r, media: Number(r.media) }
   : t === "cargos_plano" ? { ...r, salario_min: num(r.salario_min), salario_max: num(r.salario_max) }
   : t === "remuneracao" ? { ...r, salario_atual: num(r.salario_atual) }
-  : t === "bonificacoes" ? { ...r, total: num(r.total), entradas: r.entradas || {}, valores: r.valores || {} } : r;
+  : t === "bonificacoes" ? { ...r, total: r.entradas?.advertencia ? 0 : num(r.total), entradas: r.entradas || {}, valores: r.valores || {} } : r;
 function erroMsg(e) {
   if (e?.code === "42501" || /row-level security/i.test(e?.message || "")) return "Você não tem permissão para fazer isso.";
   if (e?.code === "23503") return "Esse registro está ligado a outro e não pode ser alterado assim.";
@@ -1296,6 +1301,8 @@ function calcBonif(entradas) {
     if (!BONIF[p]) continue;
     const r = BONIF[p].calc(e || {});
     valores[p] = Math.round(r.valor * 100) / 100; det[p] = r.det;
+    // advertência no mês: a pessoa perde o direito à bonificação inteira
+    if (entradas.advertencia) { valores[p] = 0; det[p] = "Sem direito: advertência no mês." + (r.det ? " Sem a advertência seria " + brl(Math.round(r.valor * 100) / 100) + " (" + r.det + ")." : ""); }
   }
   return { valores, det, total: Math.round(Object.values(valores).reduce((s, v) => s + v, 0) * 100) / 100 };
 }
@@ -1366,7 +1373,9 @@ function formBonificacao(b, cid, comp) {
     ${b.colaborador_id ? `<p class="small muted">${novo && bonifDe(b.colaborador_id).length ? "As partes e os valores unitários vieram do último lançamento da pessoa. Preencha as quantidades do mês." : "Marque as partes da bonificação que valem para esta pessoa."}</p>` : `<p class="small muted">Escolha o colaborador para carregar as partes do último lançamento dele.</p>`}
     <p class="bf-sec">Partes da bonificação</p>
     <div class="bf-partes">${partes}</div>
-    <div class="bf-total"><span>Bonificação de ${esc(MESES[mes - 1].toLowerCase())}</span><b id="bf-total">—</b></div>
+    <div class="bf-adv ${b.entradas?.advertencia ? "on" : ""}" id="bf-adv"><label class="bf-chk"><input type="checkbox" name="adv" ${b.entradas?.advertencia ? "checked" : ""}> Teve advertência neste mês: sem direito à bonificação</label>
+      <div class="field"><label for="bf-adv-mot">Motivo e data da advertência</label><input type="text" id="bf-adv-mot" name="adv_motivo" value="${esc(b.entradas?.advertencia?.motivo || "")}" placeholder="Ex.: atrasos recorrentes · 12/03"></div></div>
+    <div class="bf-total" id="bf-total-box"><span id="bf-total-lbl">Bonificação de ${esc(MESES[mes - 1].toLowerCase())}</span><b id="bf-total">—</b></div>
     <p class="bf-sec">Folha do mês <span class="small muted" style="font-family:var(--body);font-weight:400">· opcional</span></p>
     <div class="form-grid">${FOLHA_CAMPOS.map(([k, rot]) => `<div class="field"><label for="bf-f-${k}">${rot}</label><input type="text" inputmode="decimal" id="bf-f-${k}" name="f.${k}" value="${valorCampo(f[k] ?? null)}"></div>`).join("")}
       <div class="field full"><label for="bf-f-bh">Fechamento do banco de horas</label><input type="text" id="bf-f-bh" name="f.banco_horas" value="${esc(f.banco_horas || "")}" placeholder="Ex.: (00:31)"></div></div>
@@ -1411,6 +1420,7 @@ function lerBonif() {
       else { const v = ler(fd.get(nm)); if (Number.isNaN(v)) erro ??= `Confira o campo “${rot}” em ${BONIF[p].nome}.`; entradas[p][k] = Number.isNaN(v) ? null : v; }
     }
   }
+  if (el("adv")?.checked) entradas.advertencia = { motivo: (fd.get("adv_motivo") || "").trim() || null };
   const grupo = (campos, pre) => { const o = {}; for (const [k, rot] of campos) { const v = ler(fd.get(pre + k)); if (Number.isNaN(v)) erro ??= `Confira o campo “${rot}”.`; else if (v != null) o[k] = v; } return o; };
   const folha = grupo(FOLHA_CAMPOS, "f."), horas = grupo(HORAS_CAMPOS, "h.");
   const bh = (fd.get("f.banco_horas") || "").trim(); if (bh) folha.banco_horas = bh;
@@ -1426,6 +1436,10 @@ function atualizarBonif() {
     document.getElementById("bfd-" + p).textContent = on ? r.det[p] || "" : "";
   });
   document.getElementById("bf-total").textContent = brl(r.total);
+  const adv = !!r.entradas.advertencia, mesTxt = MESES[Number(mForm.elements.mes.value) - 1].toLowerCase();
+  document.getElementById("bf-adv").classList.toggle("on", adv);
+  document.getElementById("bf-total-box").classList.toggle("adv", adv);
+  document.getElementById("bf-total-lbl").textContent = adv ? `Bonificação de ${mesTxt} · sem direito por advertência` : `Bonificação de ${mesTxt}`;
   const tf = totaisFolha(r.total, r.folha), th = totaisHoras(r.horas, r.entradas);
   document.getElementById("bf-folha").innerHTML = tf ? `<span>Total bruto <b>${brl(tf.bruto)}</b></span><span>Total líquido <b>${brl(tf.liquido)}</b></span><span>bonificação + salário + Unimed + auxílio</span>` : "";
   document.getElementById("bf-horas").innerHTML = th ? `<span>Horas total <b>${numBR(th.total, 2)}</b></span>${th.balancetes ? `<span>Balancetes <b>${numBR(th.balancetes)}</b></span><span>Horas por balancete <b>${numBR(th.porBal, 2)}</b></span>` : ""}` : "";
@@ -1439,7 +1453,7 @@ mForm.addEventListener("input", e => {
   }
   atualizarBonif();
 });
-const tagsBonif = b => `<div class="bf-tags">${Object.keys(BONIF).filter(p => p in (b.entradas || {})).map(p => `<span class="tag" title="${esc(BONIF[p].nome)}">${esc(BONIF[p].nome)} ${brl(b.valores?.[p] ?? calcBonif({ [p]: b.entradas[p] }).total)}</span>`).join("")}</div>`;
+const tagsBonif = b => `<div class="bf-tags">${b.entradas?.advertencia ? `<span class="pill bad" title="${esc(b.entradas.advertencia.motivo || "Advertência no mês")}">Advertência: sem direito</span>` : ""}${Object.keys(BONIF).filter(p => p in (b.entradas || {})).map(p => `<span class="tag" title="${esc(BONIF[p].nome)}">${esc(BONIF[p].nome)} ${brl(b.valores?.[p] ?? calcBonif({ [p]: b.entradas[p] }).total)}</span>`).join("")}</div>`;
 
 const VIEWS = {
   painel() {
@@ -1802,7 +1816,8 @@ const VIEWS = {
     const mesesCom = new Set(doAno.map(b => +b.competencia.slice(5, 7)));
     const pessoasAno = [...new Set(doAno.map(b => b.colaborador_id))].map(colab).filter(Boolean).sort(byNome);
     const cel = (cid, m) => { const b = doAno.find(x => x.colaborador_id === cid && x.competencia === compDe(ano, m));
-      return b ? `<td class="bf-cel ${m === mes ? "bf-sel" : ""}" data-action="edit-bonif" data-id="${esc(b.id)}" title="${esc(fmtComp(b.competencia))}">${numBR(b.total, 2)}</td>`
+      return b ? (b.entradas?.advertencia ? `<td class="bf-cel bf-adv-cel ${m === mes ? "bf-sel" : ""}" data-action="edit-bonif" data-id="${esc(b.id)}" title="${esc(fmtComp(b.competencia))}: advertência, sem direito à bonificação">Adv.</td>`
+        : `<td class="bf-cel ${m === mes ? "bf-sel" : ""}" data-action="edit-bonif" data-id="${esc(b.id)}" title="${esc(fmtComp(b.competencia))}">${numBR(b.total, 2)}</td>`)
         : `<td class="bf-cel bf-vazio ${m === mes ? "bf-sel" : ""}" data-action="new-bonif" data-id="${esc(cid)}" data-comp="${compDe(ano, m)}" title="Lançar ${MESES[m - 1].toLowerCase()}">—</td>`; };
     const linhaMes = b => { const c = colab(b.colaborador_id), tf = totaisFolha(b.total, b.folha), th = totaisHoras(b.horas, b.entradas);
       return `<tr><td><div class="person">${avatar(c)}<div><b>${esc(c?.nome)}</b><small>${esc(SETORES[c?.setor] || "")}</small></div></div></td>
@@ -1814,7 +1829,7 @@ const VIEWS = {
       <div class="toolbar"><select data-filter="bfAno" aria-label="Ano">${anos.map(a => `<option value="${a}" ${a === ano ? "selected" : ""}>${a}</option>`).join("")}</select>
         <div class="scope" role="group" aria-label="Mês">${MESES.map((m, i) => `<button type="button" class="chip" data-action="bf-mes" data-mes="${i + 1}" aria-pressed="${i + 1 === mes}">${m.slice(0, 3)}${mesesCom.has(i + 1) ? " •" : ""}</button>`).join("")}</div></div>
       <div class="kpis">
-        <div class="kpi"><span>Bonificação de ${MESES[mes - 1].toLowerCase()}</span><b class="num" style="font-size:1.35rem">${brl(totMes)}</b><span>${doMes.length} pessoa(s) lançada(s)</span></div>
+        <div class="kpi"><span>Bonificação de ${MESES[mes - 1].toLowerCase()}</span><b class="num" style="font-size:1.35rem">${brl(totMes)}</b><span>${doMes.length} pessoa(s) lançada(s)${doMes.filter(b => b.entradas?.advertencia).length ? ` · ${doMes.filter(b => b.entradas?.advertencia).length} com advertência` : ""}</span></div>
         <div class="kpi"><span>Média por pessoa no mês</span><b class="num" style="font-size:1.35rem">${doMes.length ? brl(totMes / doMes.length) : "—"}</b><span>entre quem foi lançado</span></div>
         <div class="kpi"><span>Acumulado em ${ano}</span><b class="num" style="font-size:1.35rem">${brl(totAno)}</b><span>${mesesCom.size} mês(es) com lançamento</span></div>
         <div class="kpi"><span>Faltam lançar</span><b>${pendentes.length}</b><span>pessoas ativas que já recebem bonificação</span></div>
@@ -1840,6 +1855,7 @@ const VIEWS = {
           <p><b>Fiscal.</b> Quantidade de empresas de cada regime vezes o valor do regime: Simples e inativas R$ 3 ou R$ 5 (conforme o cargo), Presumido R$ 25 e Real R$ 50.</p>
           <p><b>Inadimplência.</b> 1% ou menos = R$ 230, e R$ 20 a menos a cada ponto, até 10% = R$ 50. Acima de 10%, nada.</p>
           <p><b>Societário.</b> R$ 55 por empresa (abertura, alteração ou baixa) e R$ 20 por CAEPF. <b>Marketing:</b> R$ 10 por vídeo. <b>Licitações:</b> R$ 50 cada. <b>Carnê-leão, MEIs e rural:</b> valor por cliente acompanhado. <b>Imposto de Renda:</b> percentual sobre o valor das declarações. <b>Onvio</b> e <b>valor fixo</b>: valor informado.</p>
+          <p><b>Advertência.</b> Quem teve advertência no mês não tem direito à bonificação: marque no lançamento e o valor do mês fica zerado. O cálculo de quanto seria continua visível no lançamento. Na relação do ano, o mês aparece como “Adv.”.</p>
           <p><b>Ajuste</b> serve para descontos ou valores combinados à parte; informe o motivo. Total bruto e líquido = bonificação + salário (bruto ou líquido) + Unimed + auxílio atividade física. Horas por balancete = horas totais ÷ (ativas + inativas finalizadas).</p>
           <p class="small muted">Os valores unitários ficam em cada lançamento. Se uma regra mudar (por exemplo, o valor base de um cargo), altere no lançamento do mês e os meses seguintes já nascem com o valor novo.</p>
         </div></details>`;
